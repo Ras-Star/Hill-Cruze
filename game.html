@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hill Cruze: Downhill Madness</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1200" height="600"></canvas>
+        
+        <div id="score" class="hud">Score: 0</div>
+        <div id="distance" class="hud">Distance: 0m</div>
+        <div id="speed" class="hud">Speed: 0 km/h</div>
+        <div id="stamina-container" class="hud">
+            <div class="stamina-label">Stamina</div>
+            <div id="stamina-bar">
+                <div id="stamina-fill"></div>
+            </div>
+        </div>
+        <div class="power-up-indicator" id="powerUpIndicator"></div>
+        
+        <div class="game-controls">
+            <button id="pauseBtn">⏸️ Pause</button>
+            <button id="audioToggle">🔊</button>
+        </div>
+
+        <div id="mobileControls">
+            <div class="mobile-btn" id="leftBtn">←</div>
+            <div class="mobile-btn" id="jumpBtn">↑</div>
+            <div class="mobile-btn" id="rightBtn">→</div>
+            <div class="mobile-btn" id="duckBtn">↓</div>
+        </div>
+
+        <div id="startScreen" class="screen hidden">
+            <h1>🚴 Hill Cruze</h1>
+            <p class="subtitle">Get Ready!</p>
+            <button class="btn" id="startGameBtn">🚀 Start Adventure</button>
+        </div>
+
+        <div id="gameOverScreen" class="screen hidden">
+            <h1>🏁 Race Complete!</h1>
+            <div class="score-display">
+                <div>Final Score: <span id="finalScore">0</span></div>
+                <div>Distance: <span id="finalDistance">0</span>m</div>
+                <div>Max Speed: <span id="maxSpeed">0</span> km/h</div>
+            </div>
+            <button class="btn" id="restartGameBtn">🔄 Race Again</button>
+            <a href="index.html" class="btn">⬅️ Main Menu</a>
+        </div>
+
+        <div id="pauseScreen" class="screen hidden">
+            <h1>⏸️ Game Paused</h1>
+            <button class="btn" id="resumeGameBtn">▶️ Continue</button>
+            <br>
+            <button class="btn" id="restartFromPauseBtn">🔄 Restart</button>
+            <a href="index.html" class="btn">⬅️ Main Menu</a>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

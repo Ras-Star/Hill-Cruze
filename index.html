@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hill Cruze: Downhill Madness</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="screen-container">
+        <div id="main-menu" class="screen">
+            <h1>🚴 Hill Cruze: Downhill Madness</h1>
+            <p class="subtitle">Race through African terrains!</p>
+            <a href="game.html" class="btn">🚀 Start Adventure</a>
+            <a href="instructions.html" class="btn">📖 How to Play</a>
+            <div class="high-score">
+                <h2>High Score</h2>
+                <p id="highScore">0</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const highScore = localStorage.getItem('hillCruzeHighScore') || 0;
+            document.getElementById('highScore').textContent = highScore;
+        });
+    </script>
+</body>
+</html>

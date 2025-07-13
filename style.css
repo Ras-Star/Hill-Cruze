@@ -1,0 +1,294 @@
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #333;
+    overflow: hidden;
+    user-select: none;
+    touch-action: manipulation;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#gameContainer, .screen-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #87CEEA 0%, #FF6400 100%);
+}
+
+#gameCanvas {
+    background: linear-gradient(to bottom, #87CEEA 0%, #FFE4B5 100%);
+    border: 4px solid #8B4513;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    display: block;
+}
+
+.hud {
+    position: absolute;
+    color: white;
+    font-weight: bold;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+    z-index: 10;
+    background: rgba(0,0,0,0.55);
+    padding: 10px 15px;
+    border-radius: 10px;
+    pointer-events: none;
+    backdrop-filter: blur(3px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#score { top: 20px; left: 20px; font-size: 20px; }
+#distance { top: 20px; right: 20px; font-size: 18px; }
+#speed { top: 70px; right: 20px; font-size: 16px; }
+
+#stamina-container {
+    bottom: 90px;
+    left: 20px;
+    width: 200px;
+}
+
+.stamina-label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #FFD700;
+}
+
+#stamina-bar {
+    width: 100%;
+    height: 18px;
+    background: rgba(255,0,0,0.2);
+    border: 2px solid white;
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+#stamina-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FF4444, #44FF44);
+    border-radius: 7px;
+    transition: width 0.3s ease;
+    width: 100%;
+}
+
+.power-up-indicator {
+    position: absolute;
+    top: 70px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.power-up-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    border: 2px solid white;
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+.power-up-speed { background: #FF4444; }
+.power-up-energy { background: #44FF44; }
+.power-up-shield { background: #4444FF; }
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.game-controls {
+    position: absolute;
+    top: 20px;
+    right: 180px;
+    display: flex;
+    gap: 10px;
+    z-index: 15;
+}
+
+#pauseBtn, #audioToggle {
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    backdrop-filter: blur(3px);
+}
+
+#mobileControls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    gap: 20px;
+    z-index: 20;
+}
+
+.mobile-btn {
+    width: 65px;
+    height: 65px;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    transition: all 0.1s ease;
+}
+
+.mobile-btn:active {
+    background: rgba(255,255,255,0.3);
+    transform: scale(0.95);
+}
+
+.screen {
+    position: absolute; /* CRITICAL FIX: Positions the screen over the canvas */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    color: white;
+    z-index: 100;
+    text-align: center;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.screen h1 {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    color: #FF6400;
+    text-shadow: 3px 3px 8px rgba(0,0,0,0.8);
+}
+
+.subtitle {
+    font-size: 1.3rem;
+    margin-bottom: 30px;
+    color: #87CEEA;
+}
+
+.btn, a.btn {
+    background: linear-gradient(45deg, #FF6400, #FFD700);
+    border: none;
+    padding: 15px 35px;
+    font-size: 1.3rem;
+    color: white;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    font-weight: bold;
+    margin: 10px;
+    text-decoration: none;
+    display: inline-block;
+    text-transform: uppercase;
+}
+
+.btn:hover, a.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    filter: brightness(1.1);
+}
+
+.hidden { display: none !important; }
+
+.score-display {
+    font-size: 2.2rem;
+    color: #FFD700;
+    margin: 25px 0;
+    background: rgba(0,0,0,0.3);
+    padding: 30px;
+    border-radius: 10px;
+    width: 80vw;
+    max-width: 1100px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.high-score {
+    margin-top: 40px;
+    font-size: 1.8rem;
+}
+
+#highScore {
+    font-size: 2.5rem;
+    color: #FFD700;
+}
+
+.instructions {
+    margin-bottom: 30px;
+    line-height: 1.8;
+    max-width: 500px;
+}
+
+.instructions h2 {
+    color: #FFD700;
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 1024px) {
+    .score-display {
+        font-size: 1.8rem;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .screen h1 { font-size: 2.5rem; }
+    #mobileControls { display: flex; }
+    #score { font-size: 18px; }
+    #stamina-container { width: 150px; }
+    .game-controls { right: 20px; top: auto; bottom: 20px; }
+}
+
+@media (max-width: 480px) {
+    .screen h1 {
+        font-size: 2.2rem;
+    }
+
+    .score-display {
+        font-size: 1.2rem;
+        padding: 20px;
+        width: 90vw;
+    }
+
+    .btn, a.btn {
+        font-size: 1.1rem;
+        padding: 12px 24px;
+    }
+}
