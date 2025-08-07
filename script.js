@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
         maxSpeed: 0,
         gameSpeed: 5,
         audioEnabled: true,
-        canvasWidth: 1200,
-        canvasHeight: 600
+        canvasWidth: window.innerWidth,
+        canvasHeight: window.innerHeight
     };
 
     const Utils = {
@@ -400,10 +400,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function init() {
         gameState.ctx = gameState.canvas.getContext('2d');
         const resizeCanvas = () => {
-            const container = document.getElementById('gameContainer');
-            const scale = Math.min((container.clientWidth - 40) / gameState.canvasWidth, (container.clientHeight - 40) / gameState.canvasHeight, 1);
-            gameState.canvas.style.width = `${gameState.canvasWidth * scale}px`;
-            gameState.canvas.style.height = `${gameState.canvasHeight * scale}px`;
+            gameState.canvas.width = window.innerWidth;
+            gameState.canvas.height = window.innerHeight;
+            gameState.canvasWidth = window.innerWidth;
+            gameState.canvasHeight = window.innerHeight;
+            terrain.baseY = gameState.canvas.height * 0.8; // Adjust terrain level based on new height
         };
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
