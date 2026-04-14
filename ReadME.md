@@ -1,56 +1,47 @@
-# 🚴 Hill Cruze: Downhill Madness
+# Hill Cruze
 
-A fast-paced, side-scrolling downhill biking game set in the vibrant terrains of Africa. Dodge obstacles, grab power-ups, and race for the highest score!
+Hill Cruze is now a Phaser-based endless cyclist game with a Bootstrap shell, milestone biome swaps, local WebP terrain backgrounds, and cosmetic meta-progression stored in `localStorage`.
 
-## Table of Contents
+## Stack
 
-1.  [Gameplay](#gameplay)
-2.  [How to Play](#how-to-play)
-3.  [Features](#features)
-4.  [Project Structure](#project-structure)
-5.  [Getting Started](#getting-started)
-6.  [Scalability & Design](#scalability--design)
+- Phaser 3 for scene-driven gameplay
+- Bootstrap 5 for the landing shell and responsive UI framing
+- Sharp for background fetching and WebP conversion
 
----
+## Run Notes
 
-### Gameplay
+Open `index.html` for the hub and `game.html` for the gameplay host.
 
-**Hill Cruze** is an endless runner where you control a cyclist navigating a procedurally generated, bumpy terrain. The goal is to survive as long as possible while collecting points.
+Controls:
 
--   **Progressive Difficulty**: The game gets faster and obstacles appear more frequently the farther you travel.
--   **Stamina Management**: Use your stamina to accelerate, but be careful! Running out will leave you slow and vulnerable.
--   **Power-Ups**: Collect three types of power-ups to aid your run:
-    -   🚀 **Speed Boost**: A temporary burst of speed.
-    -   💉 **Energy Refill**: Instantly replenishes your stamina over time.
-    -   🛡️ **Shield**: Protects you from a single obstacle collision.
+- `Left / Right` or `A / D`: steer
+- `Up / W / Space`: jump
+- `Down / S`: duck
+- `Shift`: boost
 
----
+## Background Assets
 
-### How to Play
+Terrain references are documented in [assets/backgrounds/SOURCES.md](assets/backgrounds/SOURCES.md).
 
-The controls are simple and intuitive for both desktop and mobile.
+To refresh the local WebP backgrounds:
 
-**Desktop Controls:**
--   **Steer Left:** `←` (Left Arrow) or `A`
--   **Steer Right:** `→` (Right Arrow) or `D`
--   **Jump:** `↑` (Up Arrow) or `W` or `Space`
--   **Duck:** `↓` (Down Arrow) or `S`
+```bash
+npm run fetch:backgrounds
+```
 
-**Mobile Controls:**
--   Use the on-screen touch controls for steering, jumping, and ducking.
+This command writes:
 
----
+- `assets/backgrounds/*.webp`
+- `assets/backgrounds/sources.json`
 
-### Features
+## Persistence
 
--   **Persistent High Score**: Your highest score is saved locally in your browser using `localStorage`.
--   **Responsive Design**: A clean UI that adapts to both desktop and mobile screens.
--   **Dynamic Sound**: Simple, synthesized audio feedback for key actions.
--   **Modular Code**: Separated HTML, CSS, and JavaScript files for easy maintenance and scalability.
--   **Zero Dependencies**: Runs in any modern web browser with no external libraries required.
+The game stores:
 
----
+- best score
+- longest distance
+- total tokens
+- unlocked riders, bikes, badges, and background packs
+- current cosmetic selections
 
-### Project Structure
-
-The codebase is organized into clear, distinct files to promote scalability and readability.
+All profile data is saved under the `hillCruzeProfileV2` localStorage key.
