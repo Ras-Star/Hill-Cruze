@@ -41,69 +41,7 @@ export class BootScene extends Phaser.Scene {
     }
 
     create() {
-        const profile = getProfile();
-        const rider = getCatalogItem("riders", profile.selectedRider);
-        const bike = getCatalogItem("bikes", profile.selectedBike);
         const g = this.make.graphics({ x: 0, y: 0, add: false });
-
-        g.fillStyle(0xffcf88).fillCircle(86, 28, 14);
-        g.fillStyle(rider.suit).fillRoundedRect(68, 38, 36, 42, 12);
-        g.fillStyle(rider.accent).fillRoundedRect(67, 24, 38, 14, 7);
-        g.lineStyle(10, bike.frame, 1);
-        g.strokeCircle(42, 98, 24);
-        g.strokeCircle(132, 98, 24);
-        g.beginPath();
-        g.moveTo(42, 98);
-        g.lineTo(76, 56);
-        g.lineTo(112, 90);
-        g.lineTo(66, 90);
-        g.lineTo(42, 98);
-        g.moveTo(76, 56);
-        g.lineTo(114, 44);
-        g.moveTo(114, 44);
-        g.lineTo(132, 98);
-        g.strokePath();
-        g.lineStyle(6, bike.trim, 1);
-        g.beginPath();
-        g.moveTo(114, 44);
-        g.lineTo(132, 44);
-        g.moveTo(64, 56);
-        g.lineTo(54, 40);
-        g.strokePath();
-        g.generateTexture("cyclist", 176, 124);
-        g.clear();
-
-        g.fillStyle(0xd0b16d).fillCircle(28, 28, 24).fillCircle(28, 28, 18);
-        g.generateTexture("coin", 56, 56);
-        g.clear();
-
-        g.fillStyle(0x767676).fillEllipse(54, 34, 92, 58);
-        g.generateTexture("obstacle-rock", 108, 68);
-        g.clear();
-
-        g.fillStyle(0x8d5a30).fillRoundedRect(8, 8, 94, 64, 12);
-        g.lineStyle(4, 0xbf8455).strokeRoundedRect(8, 8, 94, 64, 12);
-        g.generateTexture("obstacle-crate", 110, 80);
-        g.clear();
-
-        g.fillStyle(0x5c3b21).fillRoundedRect(0, 8, 156, 24, 10);
-        g.generateTexture("obstacle-branch", 156, 40);
-        g.clear();
-
-        g.fillStyle(0x7a91ff).fillCircle(28, 28, 24);
-        g.lineStyle(4, 0xffffff).strokeCircle(28, 28, 20);
-        g.generateTexture("powerup-shield", 56, 56);
-        g.clear();
-
-        g.fillStyle(0xff8f3d).fillCircle(28, 28, 24);
-        g.lineStyle(6, 0xffffff).beginPath().moveTo(20, 12).lineTo(34, 26).lineTo(24, 26).lineTo(36, 44).strokePath();
-        g.generateTexture("powerup-rush", 56, 56);
-        g.clear();
-
-        g.fillStyle(0x82c991).fillCircle(28, 28, 24);
-        g.fillStyle(0xffffff).fillRoundedRect(22, 12, 12, 28, 6).fillRoundedRect(18, 18, 20, 8, 4);
-        g.generateTexture("powerup-energy", 56, 56);
-        g.clear();
 
         g.fillStyle(0x17212a).fillRect(0, 0, 256, 96);
         g.fillStyle(0xffffff, 0.08).fillRect(12, 10, 36, 76).fillRect(72, 10, 36, 76).fillRect(132, 10, 36, 76);
@@ -134,16 +72,39 @@ export class PreloadScene extends Phaser.Scene {
             color: "#ffffff",
             letterSpacing: 4
         }).setOrigin(0.5);
+        const status = this.add.text(WORLD.width / 2, WORLD.height / 2 + 66, "Preparing backgrounds and vectors", {
+            fontFamily: "Manrope",
+            fontSize: "24px",
+            color: "#d7e5e2"
+        }).setOrigin(0.5);
         const barBg = this.add.rectangle(WORLD.width / 2, WORLD.height / 2 + 18, 440, 18, 0xffffff, 0.12);
         const bar = this.add.rectangle(WORLD.width / 2 - 216, WORLD.height / 2 + 18, 0, 18, 0xffb347, 1).setOrigin(0, 0.5);
+        const percent = this.add.text(WORLD.width / 2, WORLD.height / 2 + 112, "0%", {
+            fontFamily: "Bebas Neue",
+            fontSize: "42px",
+            color: "#ffdca0",
+            letterSpacing: 2
+        }).setOrigin(0.5);
 
-        this.load.on("progress", (value) => bar.width = 432 * value);
+        this.load.on("progress", (value) => {
+            bar.width = 432 * value;
+            percent.setText(`${Math.round(value * 100)}%`);
+        });
         this.load.on("complete", () => {
             label.setText("Course art ready");
+            status.setText("Entering the main ride menu");
             this.time.delayedCall(180, () => this.scene.start("MenuScene"));
         });
 
         BIOMES.forEach((biome) => this.load.image(biome.id, biome.asset));
+        this.load.svg("cyclist", "assets/sprites/cyclist.svg");
+        this.load.svg("coin", "assets/sprites/coin.svg");
+        this.load.svg("obstacle-rock", "assets/sprites/obstacle-rock.svg");
+        this.load.svg("obstacle-crate", "assets/sprites/obstacle-crate.svg");
+        this.load.svg("obstacle-branch", "assets/sprites/obstacle-branch.svg");
+        this.load.svg("powerup-shield", "assets/sprites/powerup-shield.svg");
+        this.load.svg("powerup-rush", "assets/sprites/powerup-rush.svg");
+        this.load.svg("powerup-energy", "assets/sprites/powerup-energy.svg");
         barBg.setStrokeStyle(2, 0xffffff, 0.2);
     }
 }
@@ -235,7 +196,7 @@ export class RunScene extends Phaser.Scene {
         this.trackGraphics = this.add.graphics().setDepth(3);
 
         this.player = this.add.sprite(WORLD.riderBaseX, 600, "cyclist").setOrigin(0.5, 1).setDepth(6);
-        this.player.setScale(1);
+        this.player.setDisplaySize(198, 134);
         this.player.x = WORLD.riderBaseX;
         this.player.y = this.getGroundY(this.player.x);
         this.isGrounded = true;
@@ -284,7 +245,7 @@ export class RunScene extends Phaser.Scene {
             this.isGrounded = true;
         }
 
-        this.player.setScale(1, this.ducking ? 0.82 : 1);
+        this.player.setDisplaySize(198, this.ducking ? 110 : 134);
 
         const rushBonus = this.powerTimers.rush > 0 ? 1.12 : 1;
         const boostBonus = boostHeld && this.stamina > 0 ? RUN_CONFIG.boostMultiplier : 1;
@@ -390,6 +351,7 @@ export class RunScene extends Phaser.Scene {
             for (let index = 0; index < 5; index += 1) {
                 const coin = this.add.sprite(WORLD.width + 180 + (index * 88), 0, "coin").setDepth(5);
                 coin.setData("phase", index * 0.5);
+                coin.setScale(0.9);
                 this.coinSprites.push(coin);
             }
             this.spawnClock.coins = Phaser.Math.Between(...RUN_CONFIG.coinInterval);
@@ -400,6 +362,7 @@ export class RunScene extends Phaser.Scene {
             const sprite = this.add.sprite(WORLD.width + 200, 0, POWERUPS[type].key).setDepth(5);
             sprite.setData("type", type);
             sprite.setData("phase", Math.random() * 5);
+            sprite.setScale(0.92);
             this.powerupSprites.push(sprite);
             this.spawnClock.powerup = Phaser.Math.Between(...RUN_CONFIG.powerupInterval);
         }
@@ -409,6 +372,7 @@ export class RunScene extends Phaser.Scene {
         const type = Phaser.Utils.Array.GetRandom(["rock", "rock", "crate", "branch"]);
         const sprite = this.add.sprite(WORLD.width + 180, 0, OBSTACLES[type].key).setDepth(5);
         sprite.setData("type", type);
+        if (type === "branch") sprite.setScale(0.96);
         this.obstacles.push(sprite);
     }
 

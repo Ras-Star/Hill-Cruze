@@ -47,6 +47,10 @@ select {
     overflow-x: hidden;
 }
 
+.game-shell .container-fluid {
+    max-width: 1920px;
+}
+
 .landing-backdrop,
 .game-shell__bg {
     position: fixed;
@@ -363,7 +367,7 @@ select {
 .phaser-root {
     width: 100%;
     aspect-ratio: 16 / 9;
-    min-height: min(78vh, 920px);
+    min-height: clamp(620px, 80vh, 980px);
     border-radius: calc(var(--radius-xl) - 0.6rem);
     overflow: hidden;
     background:
@@ -502,6 +506,10 @@ select {
 }
 
 @media (max-width: 1199px) {
+    .side-stack {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .hud-status {
         flex-direction: column;
     }
@@ -519,6 +527,10 @@ select {
     .hud-card {
         min-width: 0;
     }
+
+    .side-stack {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 767px) {
@@ -534,7 +546,7 @@ select {
 
     .phaser-root {
         aspect-ratio: 10 / 16;
-        min-height: 70svh;
+        min-height: 76svh;
     }
 
     .hud-cluster {
@@ -587,6 +599,10 @@ select {
         font-size: 1rem;
     }
 
+    .reward-list {
+        font-size: 0.92rem;
+    }
+
     .hero-copy,
     .glass-panel,
     .preview-card__body {
@@ -610,5 +626,16 @@ select {
 
     .preview-card__overlay {
         padding: 1.25rem;
+    }
+
+    .phaser-root {
+        min-height: 78svh;
+    }
+}
+
+@media (min-width: 1200px) {
+    .side-stack {
+        position: sticky;
+        top: 1rem;
     }
 }

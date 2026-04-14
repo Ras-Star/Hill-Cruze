@@ -17,6 +17,7 @@ Hill Cruze is an endless cycling game built with Phaser 3 and a Bootstrap-based 
 - `js/config.js` - game tuning, biome data, unlock catalog, and defaults
 - `js/storage.js` - localStorage profile persistence
 - `assets/backgrounds/` - local WebP biome backgrounds and source records
+- `assets/sprites/` - local SVG gameplay assets and source notes
 - `tools/serve.mjs` - lightweight local development server
 - `tools/fetch-backgrounds.mjs` - downloads and converts background images to WebP
 
@@ -60,6 +61,8 @@ This updates:
 - `assets/backgrounds/sources.json`
 
 Reference links are also listed in `assets/backgrounds/SOURCES.md`.
+
+Gameplay sprite references and derivative SVG notes are listed in `assets/sprites/SOURCES.md`.
 
 ## Controls
 
