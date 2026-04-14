@@ -2,15 +2,15 @@ import { BIOMES, COSMETICS, RUN_CONFIG, WORLD, formatInteger, getBiome, getCatal
 import { applyRunResults, getProfile } from "../storage.js";
 
 const OBSTACLES = {
-    rock: { key: "obstacle-rock", width: 96, height: 58, yOffset: 28 },
-    crate: { key: "obstacle-crate", width: 112, height: 78, yOffset: 38 },
-    branch: { key: "obstacle-branch", width: 156, height: 36, yOffset: 170 }
+    rock: { key: "obstacle-rock", width: 104, height: 64, displayWidth: 110, displayHeight: 72, yOffset: 28 },
+    crate: { key: "obstacle-crate", width: 118, height: 84, displayWidth: 118, displayHeight: 84, yOffset: 38 },
+    branch: { key: "obstacle-branch", width: 168, height: 40, displayWidth: 176, displayHeight: 56, yOffset: 170 }
 };
 
 const POWERUPS = {
-    shield: { key: "powerup-shield", label: "Shield", duration: 10 },
-    rush: { key: "powerup-rush", label: "Rush", duration: 8 },
-    energy: { key: "powerup-energy", label: "Energy", duration: 9 }
+    shield: { key: "powerup-shield", label: "Shield", duration: 10, accent: 0x7eb7ff },
+    rush: { key: "powerup-rush", label: "Rush", duration: 8, accent: 0xffa34d },
+    energy: { key: "powerup-energy", label: "Energy", duration: 9, accent: 0x82dd9e }
 };
 
 function emit(eventName, detail) {
@@ -54,6 +54,24 @@ export class BootScene extends Phaser.Scene {
 
         g.fillStyle(0xffffff).fillEllipse(70, 140, 130, 86).fillEllipse(210, 118, 180, 104).fillEllipse(320, 152, 112, 64);
         g.generateTexture("canopy-strip", 360, 190);
+        g.clear();
+
+        g.fillStyle(0xffffff, 0.92).fillEllipse(74, 66, 128, 62).fillEllipse(154, 58, 152, 72).fillEllipse(254, 74, 112, 48);
+        g.generateTexture("cloud-strip", 320, 140);
+        g.clear();
+
+        g.fillStyle(0xff5b4d, 0.18).fillEllipse(48, 24, 96, 32);
+        g.fillStyle(0xff5b4d, 0.32).fillEllipse(48, 24, 72, 22);
+        g.generateTexture("danger-glow", 96, 48);
+        g.clear();
+
+        g.fillStyle(0xffd866, 0.12).fillCircle(32, 32, 30);
+        g.fillStyle(0xffd866, 0.24).fillCircle(32, 32, 22);
+        g.generateTexture("reward-glow", 64, 64);
+        g.clear();
+
+        g.fillStyle(0xffffff, 0.88).fillCircle(5, 5, 5);
+        g.generateTexture("dust-dot", 10, 10);
         g.destroy();
 
         this.scene.start("PreloadScene");
@@ -142,13 +160,36 @@ export class MenuScene extends Phaser.Scene {
             this.scene.start("RunScene", { startBiomeId: profile.selectedBackgroundPack });
         });
 
-        this.add.text(WORLD.width / 2, 730, "Controls: steer with Left/Right, jump with Up or Space, duck with Down, hold Shift to boost.", {
+        this.add.text(WORLD.width / 2, 706, "Controls: change lanes with Left/Right, jump with Up or Space, duck with Down, hold Shift to boost.", {
             fontFamily: "Manrope",
             fontSize: "24px",
             color: "#f0f6f5",
             align: "center",
             wordWrap: { width: 1220 }
         }).setOrigin(0.5);
+
+        const legendY = 850;
+        const hazard = this.add.container(WORLD.width / 2 - 250, legendY);
+        const hazardGlow = this.add.sprite(0, 14, "danger-glow").setScale(1.1);
+        const hazardIcon = this.add.sprite(0, -6, "obstacle-rock").setDisplaySize(88, 58);
+        const hazardText = this.add.text(86, 0, "Hazards\nRed-marked objects end the run", {
+            fontFamily: "Manrope",
+            fontSize: "23px",
+            color: "#ffd6d0",
+            lineSpacing: 8
+        }).setOrigin(0, 0.5);
+        hazard.add([hazardGlow, hazardIcon, hazardText]);
+
+        const reward = this.add.container(WORLD.width / 2 + 120, legendY);
+        const rewardGlow = this.add.sprite(0, 0, "reward-glow").setTint(0xffd866).setScale(1.15);
+        const rewardIcon = this.add.sprite(0, 0, "coin").setScale(0.92);
+        const rewardText = this.add.text(84, 0, "Rewards\nGold and bright boosts are safe", {
+            fontFamily: "Manrope",
+            fontSize: "23px",
+            color: "#fff3c7",
+            lineSpacing: 8
+        }).setOrigin(0, 0.5);
+        reward.add([rewardGlow, rewardIcon, rewardText]);
     }
 }
 
@@ -165,6 +206,10 @@ export class RunScene extends Phaser.Scene {
     create() {
         this.controls = window.hillCruzeControls;
         this.keys = this.input.keyboard.addKeys("LEFT,RIGHT,UP,DOWN,SPACE,W,A,S,D,SHIFT,ESC");
+        this.lanes = [540, 960, 1380];
+        this.currentLane = 1;
+        this.targetLane = 1;
+        this.laneSwitchCooldown = 0;
         this.distance = 0;
         this.score = 0;
         this.coins = 0;
@@ -173,7 +218,6 @@ export class RunScene extends Phaser.Scene {
         this.segmentIndex = 0;
         this.currentBiomeIndex = Math.max(0, BIOMES.findIndex((biome) => biome.id === this.startBiomeId));
         this.powerTimers = { shield: 0, rush: 0, energy: 0 };
-        this.playerVelocityX = 0;
         this.playerVelocityY = 0;
         this.isGrounded = false;
         this.ducking = false;
@@ -181,6 +225,7 @@ export class RunScene extends Phaser.Scene {
         this.spawnClock = { obstacle: 1200, coins: 1800, powerup: 5600 };
         this.hudClock = 0;
         this.trackRedrawCooldown = 0;
+        this.floatTime = 0;
         this.obstacles = [];
         this.coinSprites = [];
         this.powerupSprites = [];
@@ -190,16 +235,20 @@ export class RunScene extends Phaser.Scene {
             .setAlpha(index === this.currentBiomeIndex ? 1 : 0)
             .setDepth(0));
 
+        this.sunGlow = this.add.circle(1580, 150, 140, Phaser.Display.Color.HexStringToColor(BIOMES[this.currentBiomeIndex].accent).color, 0.15).setDepth(0.5);
+        this.cloudLayer = this.add.tileSprite(WORLD.width / 2, 210, WORLD.width + 400, 180, "cloud-strip").setAlpha(0.22).setDepth(0.9);
         this.ridgeLayer = this.add.tileSprite(WORLD.width / 2, 510, WORLD.width + 240, 280, "ridge-strip").setTint(BIOMES[this.currentBiomeIndex].ridgeTint).setAlpha(0.38).setDepth(1);
         this.canopyLayer = this.add.tileSprite(WORLD.width / 2, 600, WORLD.width + 240, 320, "canopy-strip").setTint(BIOMES[this.currentBiomeIndex].canopyTint).setAlpha(0.54).setDepth(2);
-        this.trackPattern = this.add.tileSprite(WORLD.width / 2, 890, WORLD.width + 240, 180, "track-pattern").setTint(BIOMES[this.currentBiomeIndex].laneTint).setAlpha(0.28).setDepth(4);
+        this.trackPattern = this.add.tileSprite(WORLD.width / 2, 890, WORLD.width + 240, 180, "track-pattern").setTint(BIOMES[this.currentBiomeIndex].laneTint).setAlpha(0.24).setDepth(4);
         this.trackGraphics = this.add.graphics().setDepth(3);
+        this.fxGraphics = this.add.graphics().setDepth(4.2);
 
         this.player = this.add.sprite(WORLD.riderBaseX, 600, "cyclist").setOrigin(0.5, 1).setDepth(6);
-        this.player.setDisplaySize(198, 134);
-        this.player.x = WORLD.riderBaseX;
+        this.player.setDisplaySize(214, 144);
+        this.player.x = this.lanes[this.currentLane];
         this.player.y = this.getGroundY(this.player.x);
         this.isGrounded = true;
+        this.cameras.main.setRoundPixels(true);
         emit("mode", { mode: "run" });
         emit("profile", { profile: this.profile });
         emit("status", { message: `${BIOMES[this.currentBiomeIndex].label} active. Keep moving, collect tokens, and avoid hazards.` });
@@ -217,22 +266,23 @@ export class RunScene extends Phaser.Scene {
             emit("toggle-pause", {});
         }
 
-        const leftHeld = this.keys.LEFT.isDown || this.keys.A.isDown || this.controls?.isDown("left");
-        const rightHeld = this.keys.RIGHT.isDown || this.keys.D.isDown || this.controls?.isDown("right");
+        const leftPressed = Phaser.Input.Keyboard.JustDown(this.keys.LEFT) || Phaser.Input.Keyboard.JustDown(this.keys.A) || this.controls?.consume("left");
+        const rightPressed = Phaser.Input.Keyboard.JustDown(this.keys.RIGHT) || Phaser.Input.Keyboard.JustDown(this.keys.D) || this.controls?.consume("right");
         const jumpPressed = Phaser.Input.Keyboard.JustDown(this.keys.UP) || Phaser.Input.Keyboard.JustDown(this.keys.W) || Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || this.controls?.consume("jump");
         const duckHeld = this.keys.DOWN.isDown || this.keys.S.isDown || this.controls?.isDown("duck");
         const boostHeld = this.keys.SHIFT.isDown || this.controls?.isDown("boost");
 
-        if (leftHeld) this.playerVelocityX -= RUN_CONFIG.lateralAcceleration * dt;
-        if (rightHeld) this.playerVelocityX += RUN_CONFIG.lateralAcceleration * dt;
-        if (!leftHeld && !rightHeld) this.playerVelocityX *= RUN_CONFIG.lateralFriction;
-        this.playerVelocityX = Phaser.Math.Clamp(this.playerVelocityX, -RUN_CONFIG.maxLateralSpeed, RUN_CONFIG.maxLateralSpeed);
+        this.laneSwitchCooldown = Math.max(0, this.laneSwitchCooldown - dt);
+        if (leftPressed && this.laneSwitchCooldown <= 0) this.changeLane(-1);
+        if (rightPressed && this.laneSwitchCooldown <= 0) this.changeLane(1);
 
-        this.player.x = Phaser.Math.Clamp(this.player.x + this.playerVelocityX * dt, WORLD.trackMinX, WORLD.trackMaxX);
+        const laneTargetX = this.lanes[this.targetLane];
+        this.player.x = Phaser.Math.Linear(this.player.x, laneTargetX, Math.min(1, dt * 11));
         this.ducking = duckHeld;
         if (jumpPressed && this.isGrounded) {
             this.playerVelocityY = -RUN_CONFIG.jumpVelocity;
             this.isGrounded = false;
+            this.cameras.main.shake(80, 0.0015);
         }
 
         this.playerVelocityY += RUN_CONFIG.gravity * dt;
@@ -245,7 +295,12 @@ export class RunScene extends Phaser.Scene {
             this.isGrounded = true;
         }
 
-        this.player.setDisplaySize(198, this.ducking ? 110 : 134);
+        this.floatTime += dt;
+        const lean = Phaser.Math.Clamp((laneTargetX - this.player.x) / 140, -0.18, 0.18);
+        const bob = this.isGrounded ? Math.sin(this.floatTime * 12) * 2.8 : 0;
+        this.player.setDisplaySize(214, this.ducking ? 118 : 144);
+        this.player.setRotation(lean + (this.isGrounded ? Math.sin(this.floatTime * 8) * 0.015 : -0.06));
+        this.player.y += bob;
 
         const rushBonus = this.powerTimers.rush > 0 ? 1.12 : 1;
         const boostBonus = boostHeld && this.stamina > 0 ? RUN_CONFIG.boostMultiplier : 1;
@@ -261,9 +316,12 @@ export class RunScene extends Phaser.Scene {
 
         this.distance += this.currentSpeed * dt * 0.085;
         this.score += this.currentSpeed * dt * 0.46;
+        this.cloudLayer.tilePositionX += this.currentSpeed * dt * 0.01;
         this.ridgeLayer.tilePositionX += this.currentSpeed * dt * 0.02;
         this.canopyLayer.tilePositionX += this.currentSpeed * dt * 0.04;
         this.trackPattern.tilePositionX += this.currentSpeed * dt * 0.16;
+        this.sunGlow.setAlpha(0.12 + Math.sin(this.time.now * 0.0008) * 0.04);
+        this.cameras.main.setZoom(1 + Math.min(0.045, (this.currentSpeed - RUN_CONFIG.baseSpeed) / 4200));
         this.trackRedrawCooldown -= delta;
         if (this.trackRedrawCooldown <= 0) {
             this.drawTrack();
@@ -280,6 +338,15 @@ export class RunScene extends Phaser.Scene {
         }
     }
 
+    changeLane(direction) {
+        const nextLane = Phaser.Math.Clamp(this.targetLane + direction, 0, this.lanes.length - 1);
+        if (nextLane === this.targetLane) return;
+        this.targetLane = nextLane;
+        this.currentLane = nextLane;
+        this.laneSwitchCooldown = 0.12;
+        this.cameras.main.shake(70, 0.0012);
+    }
+
     getGroundY(x) {
         return 720 + Math.sin((x * 0.008) + (this.distance * 0.02)) * 46 + Math.sin((x * 0.02) + (this.distance * 0.05)) * 18;
     }
@@ -287,7 +354,9 @@ export class RunScene extends Phaser.Scene {
     drawTrack() {
         const biome = BIOMES[this.currentBiomeIndex];
         const g = this.trackGraphics;
+        const fx = this.fxGraphics;
         g.clear();
+        fx.clear();
 
         g.fillStyle(biome.canopyTint, 0.18);
         g.beginPath();
@@ -312,6 +381,18 @@ export class RunScene extends Phaser.Scene {
             if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
         }
         g.strokePath();
+
+        this.lanes.forEach((laneX, index) => {
+            const laneAccent = index === this.targetLane ? 0xffffff : Phaser.Display.Color.HexStringToColor(biome.accent).color;
+            fx.lineStyle(index === this.targetLane ? 7 : 4, laneAccent, index === this.targetLane ? 0.22 : 0.12);
+            fx.beginPath();
+            for (let y = 420; y <= WORLD.height; y += 64) {
+                const spread = ((y - 420) / 660) * 160;
+                const x = Phaser.Math.Linear(WORLD.width / 2, laneX, Math.min(1, (y - 360) / 540));
+                if (y === 420) fx.moveTo(x, y); else fx.lineTo(x, y + spread * 0.02);
+            }
+            fx.strokePath();
+        });
     }
 
     updateBiomeCycle() {
@@ -370,9 +451,12 @@ export class RunScene extends Phaser.Scene {
 
     spawnObstacle() {
         const type = Phaser.Utils.Array.GetRandom(["rock", "rock", "crate", "branch"]);
+        const lane = Phaser.Math.Between(0, this.lanes.length - 1);
         const sprite = this.add.sprite(WORLD.width + 180, 0, OBSTACLES[type].key).setDepth(5);
         sprite.setData("type", type);
-        if (type === "branch") sprite.setScale(0.96);
+        sprite.setData("lane", lane);
+        sprite.setDisplaySize(OBSTACLES[type].displayWidth, OBSTACLES[type].displayHeight);
+        sprite.glow = this.add.sprite(sprite.x, sprite.y, "danger-glow").setDepth(4.4);
         this.obstacles.push(sprite);
     }
 

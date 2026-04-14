@@ -35,98 +35,103 @@
     </header>
 
     <main class="container-fluid px-3 px-lg-4 pb-4">
-        <div class="row g-4 align-items-start">
-            <div class="col-12 col-xl-9">
-                <section class="game-frame">
-                    <div id="phaser-root" class="phaser-root"></div>
+        <section class="game-frame">
+            <div id="phaser-root" class="phaser-root"></div>
 
-                    <div class="hud-cluster hud-cluster--left">
-                        <div class="hud-card">
-                            <span>Score</span>
-                            <strong id="hudScore">0</strong>
-                        </div>
-                        <div class="hud-card">
-                            <span>Distance</span>
-                            <strong id="hudDistance">0 m</strong>
-                        </div>
-                        <div class="hud-card">
-                            <span>Tokens</span>
-                            <strong id="hudCoins">0</strong>
-                        </div>
+            <div class="hud-cluster hud-cluster--left">
+                <div class="hud-card">
+                    <span>Score</span>
+                    <strong id="hudScore">0</strong>
+                </div>
+                <div class="hud-card">
+                    <span>Distance</span>
+                    <strong id="hudDistance">0 m</strong>
+                </div>
+                <div class="hud-card">
+                    <span>Tokens</span>
+                    <strong id="hudCoins">0</strong>
+                </div>
+            </div>
+
+            <div class="hud-cluster hud-cluster--right">
+                <div class="hud-card">
+                    <span>Speed</span>
+                    <strong id="hudSpeed">0 km/h</strong>
+                </div>
+                <div class="hud-card">
+                    <span>Biome</span>
+                    <strong id="hudBiome">Savanna Dawn</strong>
+                </div>
+            </div>
+
+            <div class="hud-center">
+                <div class="hud-callout">
+                    <span class="hud-callout__safe">Collect gold and boosts</span>
+                    <span class="hud-callout__warn">Avoid red hazards</span>
+                </div>
+            </div>
+
+            <div class="hud-status">
+                <div class="hud-card hud-card--wide">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <span class="hud-label">Stamina</span>
+                        <strong id="hudStaminaLabel">100%</strong>
                     </div>
-
-                    <div class="hud-cluster hud-cluster--right">
-                        <div class="hud-card">
-                            <span>Speed</span>
-                            <strong id="hudSpeed">0 km/h</strong>
-                        </div>
-                        <div class="hud-card">
-                            <span>Biome</span>
-                            <strong id="hudBiome">Savanna Dawn</strong>
-                        </div>
+                    <div class="stamina-meter mt-2">
+                        <div class="stamina-meter__fill" id="hudStaminaFill"></div>
                     </div>
-
-                    <div class="hud-status">
-                        <div class="hud-card hud-card--wide">
-                            <div class="d-flex justify-content-between align-items-center gap-3">
-                                <span class="hud-label">Stamina</span>
-                                <strong id="hudStaminaLabel">100%</strong>
-                            </div>
-                            <div class="stamina-meter mt-2">
-                                <div class="stamina-meter__fill" id="hudStaminaFill"></div>
-                            </div>
-                        </div>
-                        <div class="hud-card hud-card--wide">
-                            <span class="hud-label">Boosts</span>
-                            <div class="powerup-strip mt-2" id="hudPowerups">
-                                <span class="text-light-emphasis small">No active boosts</span>
-                            </div>
-                        </div>
+                </div>
+                <div class="hud-card hud-card--wide">
+                    <span class="hud-label">Boosts</span>
+                    <div class="powerup-strip mt-2" id="hudPowerups">
+                        <span class="text-light-emphasis small">No active boosts</span>
                     </div>
+                </div>
+            </div>
 
-                    <div class="mobile-controls" id="mobileControls">
-                        <button class="mobile-controls__btn" data-action="left" type="button"><i class="bi bi-arrow-left"></i></button>
-                        <button class="mobile-controls__btn" data-action="jump" type="button"><i class="bi bi-arrow-up"></i></button>
-                        <button class="mobile-controls__btn" data-action="boost" type="button"><i class="bi bi-lightning-charge-fill"></i></button>
-                        <button class="mobile-controls__btn" data-action="duck" type="button"><i class="bi bi-arrow-down"></i></button>
-                        <button class="mobile-controls__btn" data-action="right" type="button"><i class="bi bi-arrow-right"></i></button>
+            <div class="mobile-controls" id="mobileControls">
+                <button class="mobile-controls__btn" data-action="left" type="button"><i class="bi bi-arrow-left"></i></button>
+                <button class="mobile-controls__btn" data-action="jump" type="button"><i class="bi bi-arrow-up"></i></button>
+                <button class="mobile-controls__btn" data-action="boost" type="button"><i class="bi bi-lightning-charge-fill"></i></button>
+                <button class="mobile-controls__btn" data-action="duck" type="button"><i class="bi bi-arrow-down"></i></button>
+                <button class="mobile-controls__btn" data-action="right" type="button"><i class="bi bi-arrow-right"></i></button>
+            </div>
+        </section>
+
+        <section class="game-dashboard row g-3 mt-3">
+            <div class="col-12 col-lg-4">
+                <section class="glass-panel h-100">
+                    <p class="eyebrow">Session Status</p>
+                    <h2 class="section-title">Current update</h2>
+                    <p class="status-pill mt-3 mb-0" id="gameStatus">
+                        Loading course assets.
+                    </p>
+                </section>
+            </div>
+            <div class="col-12 col-lg-4">
+                <section class="glass-panel h-100">
+                    <p class="eyebrow">Active Profile</p>
+                    <h2 class="section-title">Current cosmetic loadout</h2>
+                    <div class="vstack gap-2 mt-3">
+                        <div class="profile-line"><span>Rider</span><strong id="profileRider">Ember Rider</strong></div>
+                        <div class="profile-line"><span>Bike</span><strong id="profileBike">Classic Frame</strong></div>
+                        <div class="profile-line"><span>Badge</span><strong id="profileBadge">Trail Starter</strong></div>
+                        <div class="profile-line"><span>Hub Pack</span><strong id="profileBackground">Savanna Dawn</strong></div>
                     </div>
                 </section>
             </div>
-
-            <div class="col-12 col-xl-3">
-                <div class="side-stack">
-                    <section class="glass-panel">
-                        <p class="eyebrow">Session Status</p>
-                        <h2 class="section-title">Current update</h2>
-                        <p class="status-pill mt-3" id="gameStatus">
-                            Loading course assets.
-                        </p>
-                    </section>
-
-                    <section class="glass-panel">
-                        <p class="eyebrow">Active Profile</p>
-                        <h2 class="section-title">Current cosmetic loadout</h2>
-                        <div class="vstack gap-2 mt-3">
-                            <div class="profile-line"><span>Rider</span><strong id="profileRider">Ember Rider</strong></div>
-                            <div class="profile-line"><span>Bike</span><strong id="profileBike">Classic Frame</strong></div>
-                            <div class="profile-line"><span>Badge</span><strong id="profileBadge">Trail Starter</strong></div>
-                            <div class="profile-line"><span>Hub Pack</span><strong id="profileBackground">Savanna Dawn</strong></div>
-                        </div>
-                    </section>
-
-                    <section class="glass-panel">
-                        <p class="eyebrow">Milestone Rewards</p>
-                        <h2 class="section-title">What the run gives you</h2>
-                        <ul class="reward-list mt-3">
-                            <li>Distance milestones trigger scene swaps and bonus tokens.</li>
-                            <li>Collected tokens convert into cosmetic unlocks after each run.</li>
-                            <li>Shield, rush, and energy pickups keep long sessions alive.</li>
-                        </ul>
-                    </section>
-                </div>
+            <div class="col-12 col-lg-4">
+                <section class="glass-panel h-100">
+                    <p class="eyebrow">Run Guide</p>
+                    <h2 class="section-title">Read the course</h2>
+                    <ul class="reward-list mt-3">
+                        <li>Red-marked hazards end the run unless your shield is active.</li>
+                        <li>Gold token trails and bright pickups are always safe to collect.</li>
+                        <li>Jump low hazards, duck branches, and change lanes early.</li>
+                    </ul>
+                </section>
             </div>
-        </div>
+        </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>

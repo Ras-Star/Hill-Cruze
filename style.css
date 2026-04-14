@@ -367,7 +367,7 @@ select {
 .phaser-root {
     width: 100%;
     aspect-ratio: 16 / 9;
-    min-height: clamp(620px, 80vh, 980px);
+    min-height: clamp(680px, 83vh, 1040px);
     border-radius: calc(var(--radius-xl) - 0.6rem);
     overflow: hidden;
     background:
@@ -380,7 +380,8 @@ select {
 }
 
 .hud-cluster,
-.hud-status {
+.hud-status,
+.hud-center {
     position: absolute;
     z-index: 4;
     display: flex;
@@ -401,6 +402,12 @@ select {
     left: 1.3rem;
     right: 1.3rem;
     bottom: 1.3rem;
+}
+
+.hud-center {
+    top: 1.3rem;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .hud-card {
@@ -435,6 +442,29 @@ select {
     gap: 0.55rem;
 }
 
+.hud-callout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    background: rgba(6, 11, 17, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(14px);
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hud-callout__safe {
+    color: #ffd66b;
+}
+
+.hud-callout__warn {
+    color: #ff8c7b;
+}
+
 .status-pill {
     padding: 1rem 1.1rem;
     border-radius: var(--radius-md);
@@ -462,11 +492,6 @@ select {
 
 .reward-list li + li {
     margin-top: 0.7rem;
-}
-
-.side-stack {
-    display: grid;
-    gap: 1rem;
 }
 
 .mobile-controls {
@@ -506,10 +531,6 @@ select {
 }
 
 @media (max-width: 1199px) {
-    .side-stack {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
     .hud-status {
         flex-direction: column;
     }
@@ -528,9 +549,6 @@ select {
         min-width: 0;
     }
 
-    .side-stack {
-        grid-template-columns: 1fr;
-    }
 }
 
 @media (max-width: 767px) {
@@ -546,7 +564,7 @@ select {
 
     .phaser-root {
         aspect-ratio: 10 / 16;
-        min-height: 76svh;
+        min-height: 80svh;
     }
 
     .hud-cluster {
@@ -574,6 +592,15 @@ select {
         flex-direction: column;
     }
 
+    .hud-center {
+        top: auto;
+        left: 0.8rem;
+        right: 0.8rem;
+        bottom: 10rem;
+        transform: none;
+        justify-content: center;
+    }
+
     .hud-card {
         padding: 0.65rem 0.75rem;
         min-width: 110px;
@@ -597,6 +624,14 @@ select {
         width: 3rem;
         height: 3rem;
         font-size: 1rem;
+    }
+
+    .hud-callout {
+        width: 100%;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.72rem;
+        padding: 0.6rem 0.7rem;
     }
 
     .reward-list {
@@ -630,12 +665,5 @@ select {
 
     .phaser-root {
         min-height: 78svh;
-    }
-}
-
-@media (min-width: 1200px) {
-    .side-stack {
-        position: sticky;
-        top: 1rem;
     }
 }
