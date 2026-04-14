@@ -60,7 +60,7 @@ function updateHud(detail) {
     const container = document.getElementById("hudPowerups");
     container.innerHTML = "";
     if (!detail.powerups.length) {
-        container.innerHTML = `<span class="text-light-emphasis small">No active power-ups</span>`;
+        container.innerHTML = `<span class="text-light-emphasis small">No active boosts</span>`;
         return;
     }
 
@@ -70,6 +70,26 @@ function updateHud(detail) {
         pill.textContent = powerup;
         container.appendChild(pill);
     });
+}
+
+function updatePauseButton(mode) {
+    const button = document.getElementById("pauseToggleBtn");
+    if (!button) return;
+
+    if (mode === "run") {
+        button.disabled = false;
+        button.innerHTML = `<i class="bi bi-pause-circle me-2"></i>Pause`;
+        return;
+    }
+
+    if (mode === "paused") {
+        button.disabled = false;
+        button.innerHTML = `<i class="bi bi-play-circle me-2"></i>Resume`;
+        return;
+    }
+
+    button.disabled = true;
+    button.innerHTML = `<i class="bi bi-pause-circle me-2"></i>Pause`;
 }
 
 function bindKeyboard(controller) {
@@ -126,7 +146,7 @@ function togglePause(game) {
         if (game.scene.isActive("PauseScene")) game.scene.stop("PauseScene");
         game.scene.resume("RunScene");
         document.body.dataset.mode = "run";
-        document.getElementById("gameStatus").textContent = "Back on the course.";
+        document.getElementById("gameStatus").textContent = "Ride resumed.";
     } else {
         game.scene.pause("RunScene");
         game.scene.launch("PauseScene", { startBiomeId: runScene.startBiomeId });
@@ -137,6 +157,7 @@ function togglePause(game) {
 document.addEventListener("DOMContentLoaded", () => {
     const profile = getProfile();
     updateProfilePanel(profile);
+    updatePauseButton("menu");
 
     const controls = new InputController();
     window.hillCruzeControls = controls;
@@ -163,6 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("hill-cruze:toggle-pause", () => togglePause(game));
     window.addEventListener("hill-cruze:mode", (event) => {
         document.body.dataset.mode = event.detail.mode;
+        updatePauseButton(event.detail.mode);
     });
     window.addEventListener("hill-cruze:status", (event) => {
         document.getElementById("gameStatus").textContent = event.detail.message;

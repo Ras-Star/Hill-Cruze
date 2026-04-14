@@ -88,7 +88,7 @@ export const COSMETICS = {
         { id: "ocean", label: "Ocean Frame", frame: 0x006d77, trim: 0xa9def9 }
     ],
     badges: [
-        { id: "rookie", label: "Trail Rookie" },
+        { id: "rookie", label: "Trail Starter" },
         { id: "drifter", label: "Dune Drifter" },
         { id: "whisperer", label: "Cliff Whisperer" }
     ],

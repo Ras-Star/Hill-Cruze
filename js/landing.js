@@ -36,7 +36,7 @@ function renderUnlockRoadmap(container, profile) {
         card.innerHTML = `
             <p class="eyebrow">${unlock.kind.replace("backgroundPacks", "background packs")}</p>
             <h3 class="mt-2 mb-2">${getCatalogItem(unlock.kind, unlock.id).label}</h3>
-            <p class="mb-3">${unlocked ? "Unlocked and ready to equip." : "Keep collecting run tokens to claim it."}</p>
+            <p class="mb-3">${unlocked ? "Unlocked and available in your profile." : "Earn more run tokens to unlock this reward."}</p>
             <span class="unlock-card__cost"><i class="bi bi-coin"></i>${formatInteger(unlock.cost)}</span>
         `;
         container.appendChild(card);
@@ -77,8 +77,8 @@ function refreshDashboard() {
     document.getElementById("selectedBadge").textContent = getCatalogItem("badges", profile.selectedBadge).label;
     document.getElementById("selectedBackgroundLabel").textContent = selectedBiome.label;
     document.getElementById("nextUnlock").textContent = nextUnlock
-        ? `Next unlock: ${getCatalogItem(nextUnlock.kind, nextUnlock.id).label}`
-        : "Everything unlocked";
+        ? `Next reward: ${getCatalogItem(nextUnlock.kind, nextUnlock.id).label}`
+        : "All rewards unlocked";
     document.getElementById("profileBackdrop").style.backgroundImage =
         `linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.55)), url('${selectedBiome.asset}')`;
 

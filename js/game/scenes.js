@@ -128,7 +128,7 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     preload() {
-        const label = this.add.text(WORLD.width / 2, WORLD.height / 2 - 46, "Loading terrain packs", {
+        const label = this.add.text(WORLD.width / 2, WORLD.height / 2 - 46, "Loading course art", {
             fontFamily: "Bebas Neue",
             fontSize: "68px",
             color: "#ffffff",
@@ -139,7 +139,7 @@ export class PreloadScene extends Phaser.Scene {
 
         this.load.on("progress", (value) => bar.width = 432 * value);
         this.load.on("complete", () => {
-            label.setText("Terrain packs ready");
+            label.setText("Course art ready");
             this.time.delayedCall(180, () => this.scene.start("MenuScene"));
         });
 
@@ -157,7 +157,7 @@ export class MenuScene extends Phaser.Scene {
         const profile = getProfile();
         const biome = getBiome(profile.selectedBackgroundPack);
         emit("mode", { mode: "menu" });
-        emit("status", { message: "Terrain packs loaded. Launch the run when you are ready." });
+        emit("status", { message: "Course ready. Start when you are ready." });
 
         this.add.image(WORLD.width / 2, WORLD.height / 2, biome.id).setDisplaySize(WORLD.width, WORLD.height);
         this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x061017, 0.55);
@@ -167,13 +167,13 @@ export class MenuScene extends Phaser.Scene {
             color: "#fff7df",
             letterSpacing: 6
         }).setOrigin(0.5);
-        this.add.text(WORLD.width / 2, 278, "Endless cyclist across shifting African terrain", {
+        this.add.text(WORLD.width / 2, 278, "Endless cycling across changing African terrain", {
             fontFamily: "Manrope",
             fontSize: "34px",
             color: "#e6f3f1"
         }).setOrigin(0.5);
         this.add.text(WORLD.width / 2, 392,
-            `Start pack: ${biome.label}\nBadge: ${getCatalogItem("badges", profile.selectedBadge).label}\nTokens banked: ${formatInteger(profile.totalCoins)}`,
+            `Starting pack: ${biome.label}\nBadge: ${getCatalogItem("badges", profile.selectedBadge).label}\nStored tokens: ${formatInteger(profile.totalCoins)}`,
             { fontFamily: "Manrope", fontSize: "30px", align: "center", color: "#d2dfdc", lineSpacing: 10 }
         ).setOrigin(0.5);
 
@@ -219,6 +219,7 @@ export class RunScene extends Phaser.Scene {
         this.finished = false;
         this.spawnClock = { obstacle: 1200, coins: 1800, powerup: 5600 };
         this.hudClock = 0;
+        this.trackRedrawCooldown = 0;
         this.obstacles = [];
         this.coinSprites = [];
         this.powerupSprites = [];
@@ -235,9 +236,13 @@ export class RunScene extends Phaser.Scene {
 
         this.player = this.add.sprite(WORLD.riderBaseX, 600, "cyclist").setOrigin(0.5, 1).setDepth(6);
         this.player.setScale(1);
+        this.player.x = WORLD.riderBaseX;
+        this.player.y = this.getGroundY(this.player.x);
+        this.isGrounded = true;
         emit("mode", { mode: "run" });
         emit("profile", { profile: this.profile });
-        emit("status", { message: `Rolling into ${BIOMES[this.currentBiomeIndex].label}. Build score, distance, and tokens.` });
+        emit("status", { message: `${BIOMES[this.currentBiomeIndex].label} active. Keep moving, collect tokens, and avoid hazards.` });
+        this.drawTrack();
         this.emitHud(true);
     }
 
@@ -298,7 +303,11 @@ export class RunScene extends Phaser.Scene {
         this.ridgeLayer.tilePositionX += this.currentSpeed * dt * 0.02;
         this.canopyLayer.tilePositionX += this.currentSpeed * dt * 0.04;
         this.trackPattern.tilePositionX += this.currentSpeed * dt * 0.16;
-        this.drawTrack();
+        this.trackRedrawCooldown -= delta;
+        if (this.trackRedrawCooldown <= 0) {
+            this.drawTrack();
+            this.trackRedrawCooldown = 34;
+        }
         this.updateBiomeCycle();
         this.updateSpawns(delta);
         this.updateEntities(dt);
@@ -357,11 +366,13 @@ export class RunScene extends Phaser.Scene {
             this.ridgeLayer.setTint(BIOMES[this.currentBiomeIndex].ridgeTint);
             this.canopyLayer.setTint(BIOMES[this.currentBiomeIndex].canopyTint);
             this.trackPattern.setTint(BIOMES[this.currentBiomeIndex].laneTint);
+            this.drawTrack();
         }
 
         const bonus = 25 + (nextSegment * 5);
         this.coins += bonus;
-        emit("status", { message: `${BIOMES[this.currentBiomeIndex].label} reached. Milestone reward: +${bonus} tokens.` });
+        emit("status", { message: `${BIOMES[this.currentBiomeIndex].label} reached. Bonus awarded: ${bonus} tokens.` });
+        if (this.scene.isActive("MilestoneScene")) this.scene.stop("MilestoneScene");
         this.scene.launch("MilestoneScene", { biome: BIOMES[this.currentBiomeIndex], bonus });
     }
 
@@ -474,7 +485,7 @@ export class RunScene extends Phaser.Scene {
     handleObstacleHit() {
         if (this.powerTimers.shield > 0) {
             this.powerTimers.shield = 0;
-            emit("status", { message: "Shield absorbed the crash." });
+            emit("status", { message: "Shield absorbed the impact." });
             return;
         }
 
@@ -487,7 +498,7 @@ export class RunScene extends Phaser.Scene {
 
         emit("mode", { mode: "gameover" });
         emit("profile", { profile: results.profile });
-        emit("status", { message: "Run complete. Rewards banked and cosmetic progress updated." });
+        emit("status", { message: "Ride complete. Results saved to your profile." });
 
         this.scene.launch("GameOverScene", {
             score: this.score,
@@ -529,7 +540,7 @@ export class MilestoneScene extends Phaser.Scene {
             color: "#fff2d2",
             letterSpacing: 4
         }).setOrigin(0.5);
-        this.add.text(WORLD.width / 2, 182, `Milestone reward +${data.bonus} tokens`, {
+        this.add.text(WORLD.width / 2, 182, `Milestone bonus: ${data.bonus} tokens`, {
             fontFamily: "Manrope",
             fontSize: "28px",
             color: "#d9ece7"
@@ -545,9 +556,9 @@ export class PauseScene extends Phaser.Scene {
 
     create(data) {
         emit("mode", { mode: "paused" });
-        emit("status", { message: "Run paused. Resume, restart, or head back to the hub." });
+        emit("status", { message: "Ride paused. Resume, restart, or return to the hub." });
         this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x050b12, 0.65);
-        this.add.text(WORLD.width / 2, 260, "Ride Paused", {
+        this.add.text(WORLD.width / 2, 260, "Paused", {
             fontFamily: "Bebas Neue",
             fontSize: "110px",
             color: "#fff1d4",
@@ -557,7 +568,7 @@ export class PauseScene extends Phaser.Scene {
             this.scene.stop();
             this.scene.resume("RunScene");
             emit("mode", { mode: "run" });
-            emit("status", { message: "Back on the course." });
+            emit("status", { message: "Ride resumed." });
         });
         createButton(this, WORLD.width / 2, 570, "Restart Run", () => {
             this.scene.stop("RunScene");
@@ -587,10 +598,10 @@ export class GameOverScene extends Phaser.Scene {
         ).setOrigin(0.5);
 
         const unlockText = data.unlockedThisRun.length
-            ? `Unlocked: ${data.unlockedThisRun.map((unlock) => unlock.label).join(", ")}`
+            ? `New rewards: ${data.unlockedThisRun.map((unlock) => unlock.label).join(", ")}`
             : data.nextUnlock
-                ? `Next unlock target: ${getCatalogItem(data.nextUnlock.kind, data.nextUnlock.id).label} at ${formatInteger(data.nextUnlock.cost)} tokens`
-                : "All cosmetics unlocked";
+                ? `Next reward: ${getCatalogItem(data.nextUnlock.kind, data.nextUnlock.id).label} at ${formatInteger(data.nextUnlock.cost)} tokens`
+                : "All rewards unlocked";
 
         this.add.text(WORLD.width / 2, 428, unlockText, {
             fontFamily: "Manrope",

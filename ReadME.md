@@ -1,47 +1,105 @@
 # Hill Cruze
 
-Hill Cruze is now a Phaser-based endless cyclist game with a Bootstrap shell, milestone biome swaps, local WebP terrain backgrounds, and cosmetic meta-progression stored in `localStorage`.
+Hill Cruze is an endless cycling game built with Phaser 3 and a Bootstrap-based interface shell. The experience includes biome transitions, collectible tokens, persistent cosmetic rewards, and responsive controls for desktop and mobile.
 
-## Stack
+## Tech Stack
 
-- Phaser 3 for scene-driven gameplay
-- Bootstrap 5 for the landing shell and responsive UI framing
-- Sharp for background fetching and WebP conversion
+- Phaser 3
+- Bootstrap 5
+- Native ES modules
+- Sharp for converting curated terrain images to local WebP assets
 
-## Run Notes
+## Project Structure
 
-Open `index.html` for the hub and `game.html` for the gameplay host.
+- `index.html` - landing page, profile summary, reward overview, and instructions
+- `game.html` - gameplay host and responsive HUD shell
+- `js/game/` - Phaser scenes and runtime entrypoint
+- `js/config.js` - game tuning, biome data, unlock catalog, and defaults
+- `js/storage.js` - localStorage profile persistence
+- `assets/backgrounds/` - local WebP biome backgrounds and source records
+- `tools/serve.mjs` - lightweight local development server
+- `tools/fetch-backgrounds.mjs` - downloads and converts background images to WebP
 
-Controls:
+## Requirements
 
-- `Left / Right` or `A / D`: steer
-- `Up / W / Space`: jump
-- `Down / S`: duck
-- `Shift`: boost
+- Node.js 18 or later
 
-## Background Assets
+## Installation
 
-Terrain references are documented in [assets/backgrounds/SOURCES.md](assets/backgrounds/SOURCES.md).
+```bash
+npm install
+```
 
-To refresh the local WebP backgrounds:
+## Running The Game
+
+Start the local static server:
+
+```bash
+npm start
+```
+
+Then open:
+
+```text
+http://localhost:8080
+```
+
+This is the recommended way to run the project because the game uses ES modules and local assets.
+
+## Refreshing Background Assets
+
+To re-download the curated terrain references and convert them into optimized WebP files:
 
 ```bash
 npm run fetch:backgrounds
 ```
 
-This command writes:
+This updates:
 
 - `assets/backgrounds/*.webp`
 - `assets/backgrounds/sources.json`
 
+Reference links are also listed in `assets/backgrounds/SOURCES.md`.
+
+## Controls
+
+Desktop:
+
+- `Left / Right` or `A / D` - move
+- `Up / W / Space` - jump
+- `Down / S` - duck
+- `Shift` - boost
+- `Esc` - pause
+
+Mobile:
+
+- Use the on-screen control buttons for movement, jump, duck, and boost
+
+## Game Flow
+
+1. Open the hub on `index.html`
+2. Review instructions, profile progress, and unlocked cosmetics
+3. Start a ride from `game.html`
+4. Collect tokens, avoid hazards, and pass distance milestones
+5. Reach new biomes during the run and earn milestone bonuses
+6. Finish the ride and save results back into the local profile
+
 ## Persistence
 
-The game stores:
+Player progress is stored in the browser under the `hillCruzeProfileV2` localStorage key.
+
+Saved data includes:
 
 - best score
 - longest distance
-- total tokens
+- total tokens earned
 - unlocked riders, bikes, badges, and background packs
-- current cosmetic selections
+- selected cosmetic loadout
 
-All profile data is saved under the `hillCruzeProfileV2` localStorage key.
+## Git Repository
+
+Current connected remote:
+
+```text
+origin https://github.com/cruze-tech/Hill_Cruze-Downhill-Madness.git
+```
