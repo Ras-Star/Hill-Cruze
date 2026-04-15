@@ -42,10 +42,16 @@ class InputController {
 }
 
 function updateProfilePanel(profile) {
-    document.getElementById("profileRider").textContent = getCatalogItem("riders", profile.selectedRider).label;
-    document.getElementById("profileBike").textContent = getCatalogItem("bikes", profile.selectedBike).label;
-    document.getElementById("profileBadge").textContent = getCatalogItem("badges", profile.selectedBadge).label;
-    document.getElementById("profileBackground").textContent = getBiome(profile.selectedBackgroundPack).label;
+    const rider = getCatalogItem("riders", profile.selectedRider).label;
+    const bike = getCatalogItem("bikes", profile.selectedBike).label;
+    const badge = getCatalogItem("badges", profile.selectedBadge).label;
+    const background = getBiome(profile.selectedBackgroundPack).label;
+
+    document.getElementById("profileRider").textContent = rider;
+    document.getElementById("profileBike").textContent = bike;
+    document.getElementById("profileBadge").textContent = badge;
+    document.getElementById("profileBackground").textContent = background;
+    document.getElementById("profileSummary").textContent = `${rider} / ${bike} / ${badge} / ${background}`;
 }
 
 function updateHud(detail) {
@@ -58,6 +64,12 @@ function updateHud(detail) {
     document.getElementById("hudStaminaLabel").textContent = `${Math.round(detail.stamina)}%`;
     document.getElementById("hudStaminaFill").style.width = `${detail.stamina}%`;
     document.getElementById("hudCountdown").textContent = detail.countdown || "";
+    const warningCard = document.querySelector(".hud-mini--warning");
+    if (warningCard) {
+        const warningText = detail.warning || "";
+        const isDanger = /jump|duck|hot|find the lane|hold the gap/i.test(warningText);
+        warningCard.dataset.state = isDanger ? "danger" : "clear";
+    }
 
     const container = document.getElementById("hudPowerups");
     container.innerHTML = "";

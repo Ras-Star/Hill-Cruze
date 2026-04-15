@@ -348,10 +348,10 @@ export class RunScene extends Phaser.Scene {
         this.keys = this.input.keyboard.addKeys("LEFT,RIGHT,UP,DOWN,SPACE,W,A,S,D,SHIFT,ESC");
 
         this.track = {
-            horizonY: 250,
-            laneTopX: [806, 960, 1114],
-            laneBottomX: [580, 960, 1340],
-            playerGroundY: 858
+            horizonY: 214,
+            laneTopX: [760, 960, 1160],
+            laneBottomX: [496, 960, 1424],
+            playerGroundY: 808
         };
 
         this.currentLane = 1;
@@ -390,6 +390,10 @@ export class RunScene extends Phaser.Scene {
         this.cloudLayer = this.add.tileSprite(WORLD.width / 2, 180, WORLD.width + 360, 180, "cloud-strip").setAlpha(0.2).setDepth(0.7);
         this.ridgeLayer = this.add.tileSprite(WORLD.width / 2, 444, WORLD.width + 300, 300, "ridge-strip").setTint(BIOMES[this.currentBiomeIndex].ridgeTint).setAlpha(0.32).setDepth(1);
         this.canopyLayer = this.add.tileSprite(WORLD.width / 2, 566, WORLD.width + 320, 340, "canopy-strip").setTint(BIOMES[this.currentBiomeIndex].canopyTint).setAlpha(0.48).setDepth(1.5);
+        this.trackSheen = this.add.tileSprite(WORLD.width / 2, 844, WORLD.width + 320, 310, "panel-grid")
+            .setTint(BIOMES[this.currentBiomeIndex].laneTint)
+            .setAlpha(0.08)
+            .setDepth(3.1);
 
         this.trackGraphics = this.add.graphics().setDepth(2);
         this.laneGraphics = this.add.graphics().setDepth(4);
@@ -397,9 +401,9 @@ export class RunScene extends Phaser.Scene {
         const rider = getCatalogItem("riders", this.profile.selectedRider);
         const bike = getCatalogItem("bikes", this.profile.selectedBike);
         this.playerShadow = this.add.ellipse(this.playerX, this.track.playerGroundY + 12, 140, 44, 0x000000, 0.22).setDepth(5);
-        this.playerAura = this.add.circle(this.playerX, this.track.playerGroundY - 84, 92, rider.accent, 0.12).setDepth(5.3);
+        this.playerAura = this.add.circle(this.playerX, this.track.playerGroundY - 84, 108, rider.accent, 0.12).setDepth(5.3);
         this.player = this.add.sprite(this.playerX, this.track.playerGroundY, "cyclist").setOrigin(0.5, 1).setDepth(6);
-        this.player.setDisplaySize(226, 154);
+        this.player.setDisplaySize(244, 166);
         this.player.setTint(rider.accent, rider.suit, bike.frame, bike.trim);
 
         this.cameras.main.setRoundPixels(true);
@@ -483,6 +487,8 @@ export class RunScene extends Phaser.Scene {
         this.cloudLayer.tilePositionX += ambientSpeed * dt * 0.008;
         this.ridgeLayer.tilePositionX += ambientSpeed * dt * 0.018;
         this.canopyLayer.tilePositionX += ambientSpeed * dt * 0.036;
+        this.trackSheen.tilePositionY += ambientSpeed * dt * 0.02;
+        this.trackSheen.tilePositionX += ambientSpeed * dt * 0.006;
         this.skyGlow.setAlpha(0.1 + Math.sin(this.time.now * 0.0009) * 0.03);
 
         if (liveRun && !this.warmupTrailSpawned) {
@@ -531,18 +537,35 @@ export class RunScene extends Phaser.Scene {
     drawTrack() {
         const biome = BIOMES[this.currentBiomeIndex];
         const accent = biomeColor(biome);
-        const leftTop = this.track.laneTopX[0] - 124;
-        const rightTop = this.track.laneTopX[2] + 124;
-        const leftBottom = this.track.laneBottomX[0] - 244;
-        const rightBottom = this.track.laneBottomX[2] + 244;
+        const leftTop = this.track.laneTopX[0] - 154;
+        const rightTop = this.track.laneTopX[2] + 154;
+        const leftBottom = this.track.laneBottomX[0] - 286;
+        const rightBottom = this.track.laneBottomX[2] + 286;
         const g = this.trackGraphics;
         const fx = this.laneGraphics;
 
         g.clear();
         fx.clear();
 
-        g.fillStyle(0x08111a, 0.26);
-        g.fillRect(0, this.track.horizonY - 40, WORLD.width, WORLD.height - this.track.horizonY + 40);
+        g.fillStyle(0x071019, 0.38);
+        g.fillRect(0, this.track.horizonY - 36, WORLD.width, WORLD.height - this.track.horizonY + 36);
+
+        g.fillStyle(0x000000, 0.18);
+        g.beginPath();
+        g.moveTo(leftTop - 80, this.track.horizonY + 34);
+        g.lineTo(leftTop, this.track.horizonY);
+        g.lineTo(leftBottom, WORLD.height);
+        g.lineTo(leftBottom - 160, WORLD.height);
+        g.closePath();
+        g.fillPath();
+
+        g.beginPath();
+        g.moveTo(rightTop + 80, this.track.horizonY + 34);
+        g.lineTo(rightTop, this.track.horizonY);
+        g.lineTo(rightBottom, WORLD.height);
+        g.lineTo(rightBottom + 160, WORLD.height);
+        g.closePath();
+        g.fillPath();
 
         g.fillStyle(biome.canopyTint, 0.18);
         g.beginPath();
@@ -553,7 +576,7 @@ export class RunScene extends Phaser.Scene {
         g.closePath();
         g.fillPath();
 
-        g.fillStyle(biome.laneTint, 0.88);
+        g.fillStyle(biome.laneTint, 0.9);
         g.beginPath();
         g.moveTo(leftTop, this.track.horizonY);
         g.lineTo(rightTop, this.track.horizonY);
@@ -562,7 +585,7 @@ export class RunScene extends Phaser.Scene {
         g.closePath();
         g.fillPath();
 
-        g.lineStyle(8, accent, 0.56);
+        g.lineStyle(9, accent, 0.62);
         g.beginPath();
         g.moveTo(leftTop, this.track.horizonY + 4);
         g.lineTo(leftBottom, WORLD.height);
@@ -570,11 +593,20 @@ export class RunScene extends Phaser.Scene {
         g.lineTo(rightBottom, WORLD.height);
         g.strokePath();
 
+        g.fillStyle(0xffffff, 0.055);
+        g.beginPath();
+        g.moveTo(this.track.laneTopX[0], this.track.horizonY + 8);
+        g.lineTo(this.track.laneTopX[2], this.track.horizonY + 8);
+        g.lineTo(this.track.laneBottomX[2], WORLD.height);
+        g.lineTo(this.track.laneBottomX[0], WORLD.height);
+        g.closePath();
+        g.fillPath();
+
         this.threatLevels.forEach((threat, lane) => {
             const active = lane === this.targetLane;
             const color = threat > 0.24 ? 0xff5d68 : (active ? 0xffffff : accent);
-            const alpha = active ? 0.4 : Math.max(0.12, threat * 0.3);
-            const width = active ? 6 : 4;
+            const alpha = active ? 0.5 : Math.max(0.12, threat * 0.34);
+            const width = active ? 7 : 4;
             fx.lineStyle(width, color, alpha);
             fx.beginPath();
             for (let step = 0; step <= 16; step += 1) {
@@ -584,10 +616,22 @@ export class RunScene extends Phaser.Scene {
                 else fx.lineTo(point.x, point.y);
             }
             fx.strokePath();
+
+            for (let marker = 2; marker <= 13; marker += 1) {
+                const progress = marker / 14;
+                const point = this.getPerspectivePoint(lane, progress);
+                const size = Phaser.Math.Linear(6, 44, progress);
+                fx.fillStyle(color, active ? Phaser.Math.Linear(0.12, 0.3, progress) : Phaser.Math.Linear(0.06, 0.16, progress));
+                fx.fillEllipse(point.x, point.y + (size * 0.08), size * 0.62, size * 0.18);
+            }
         });
 
-        fx.fillStyle(accent, 0.12);
-        fx.fillEllipse(WORLD.width / 2, this.track.horizonY + 10, 420, 46);
+        fx.fillStyle(accent, 0.16);
+        fx.fillEllipse(WORLD.width / 2, this.track.horizonY + 12, 480, 58);
+
+        const activeLanePoint = this.getPerspectivePoint(this.targetLane, 0.9);
+        fx.fillStyle(0xffffff, 0.14);
+        fx.fillEllipse(activeLanePoint.x, activeLanePoint.y + 8, 168, 34);
     }
 
     updatePlayerVisuals() {
@@ -598,7 +642,7 @@ export class RunScene extends Phaser.Scene {
 
         this.player.x = this.playerX;
         this.player.y = groundY + this.playerYOffset + bob;
-        this.player.setDisplaySize(226, this.ducking ? 126 : 154);
+        this.player.setDisplaySize(244, this.ducking ? 136 : 166);
         this.player.setRotation(lean + (this.isGrounded ? Math.sin(this.floatTime * 7) * 0.018 : -0.06));
 
         this.playerShadow.x = this.playerX;
@@ -628,6 +672,7 @@ export class RunScene extends Phaser.Scene {
             this.tweens.add({ targets: this.backgrounds[this.currentBiomeIndex], alpha: 1, duration: 650, ease: "Quad.Out" });
             this.ridgeLayer.setTint(BIOMES[this.currentBiomeIndex].ridgeTint);
             this.canopyLayer.setTint(BIOMES[this.currentBiomeIndex].canopyTint);
+            this.trackSheen.setTint(BIOMES[this.currentBiomeIndex].laneTint);
         }
 
         emit("status", {
@@ -757,9 +802,9 @@ export class RunScene extends Phaser.Scene {
         const sprite = this.add.sprite(0, 0, spec.key).setDepth(6);
         const glow = this.add.sprite(0, 0, "danger-glow").setDepth(5.2);
         const shadow = this.add.ellipse(0, 0, 124, 34, 0x000000, 0.2).setDepth(4.8);
-        const warning = this.add.text(0, 0, spec.maneuver === "duck" ? "DUCK" : "JUMP", {
+        const warning = this.add.text(0, 0, `${LANE_LABELS[lane].toUpperCase()} ${spec.maneuver === "duck" ? "DUCK" : "JUMP"}`, {
             fontFamily: "Teko",
-            fontSize: "46px",
+            fontSize: "38px",
             color: "#fff2d2",
             stroke: "#89212a",
             strokeThickness: 6,
@@ -893,17 +938,17 @@ export class RunScene extends Phaser.Scene {
 
         if (entity.kind === "obstacle") {
             const spec = OBSTACLES[entity.type];
-            const scale = this.getPerspectiveScale(entity.progress, 0.28, 1.12);
+            const scale = this.getPerspectiveScale(entity.progress, 0.32, 1.22);
 
             entity.sprite.setDisplaySize(spec.baseWidth * scale, spec.baseHeight * scale);
             entity.sprite.setPosition(point.x, point.y - (spec.yLift * scale));
             entity.sprite.setDepth(6 + entity.progress);
 
-            entity.glow.setPosition(point.x, point.y - (spec.yLift * scale) + 10).setScale(scale * 0.9).setAlpha(0.38);
+            entity.glow.setPosition(point.x, point.y - (spec.yLift * scale) + 10).setScale(scale).setAlpha(entity.lane === this.targetLane ? 0.52 : 0.38);
             entity.shadow.setPosition(point.x, point.y + 10).setScale(scale, scale);
-            entity.warning.setPosition(this.track.laneTopX[entity.lane], this.track.horizonY + 30);
-            entity.warning.setAlpha(entity.progress < 0.34 ? 0.2 + Math.sin(this.time.now * 0.018) * 0.16 : Math.max(0, 0.48 - entity.progress));
-            entity.warning.setScale(0.76 + (1 - Phaser.Math.Clamp(entity.progress, 0, 1)) * 0.08);
+            entity.warning.setPosition(this.track.laneTopX[entity.lane], this.track.horizonY + 40);
+            entity.warning.setAlpha(entity.progress < 0.38 ? 0.34 + Math.sin(this.time.now * 0.018) * 0.16 : Math.max(0, 0.62 - entity.progress));
+            entity.warning.setScale(0.78 + (1 - Phaser.Math.Clamp(entity.progress, 0, 1)) * 0.1);
             return true;
         }
 
@@ -1009,7 +1054,7 @@ export class RunScene extends Phaser.Scene {
             return "Find the lane";
         }
 
-        return `${LANE_LABELS[nearest.lane]} lane hot`;
+        return `${LANE_LABELS[nearest.lane]}: ${spec.maneuver}`;
     }
 
     emitHud(force) {
