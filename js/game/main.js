@@ -41,6 +41,8 @@ class InputController {
     }
 }
 
+let gameInstance = null;
+
 function updateProfilePanel(profile) {
     const rider = getCatalogItem("riders", profile.selectedRider).label;
     const bike = getCatalogItem("bikes", profile.selectedBike).label;
@@ -92,6 +94,28 @@ function applyStatus(detail = {}) {
     toast.dataset.tone = detail.tone || "info";
     document.getElementById("hudRunState").textContent = detail.label || "Course Status";
     document.getElementById("hudStatusText").textContent = detail.message || "Course ready.";
+}
+
+function updateLoader(detail = {}) {
+    const loader = document.getElementById("gameLoader");
+    if (!loader) return;
+
+    const state = detail.state || "loading";
+    const progress = typeof detail.progress === "number" ? Phaser.Math.Clamp(detail.progress, 0, 1) : null;
+
+    loader.dataset.state = state;
+    if (detail.label) document.getElementById("gameLoaderEyebrow").textContent = detail.label;
+    if (detail.title) document.getElementById("gameLoaderTitle").textContent = detail.title;
+    if (detail.message) document.getElementById("gameLoaderMessage").textContent = detail.message;
+
+    if (progress !== null) {
+        document.getElementById("gameLoaderFill").style.width = `${Math.round(progress * 100)}%`;
+        document.getElementById("gameLoaderPercent").textContent = `${Math.round(progress * 100)}%`;
+    }
+}
+
+function hideLoaderSoon() {
+    window.setTimeout(() => updateLoader({ state: "hidden", progress: 1 }), 180);
 }
 
 function updatePauseButton(mode) {
@@ -176,23 +200,43 @@ function togglePause(game) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const profile = getProfile();
-    updateProfilePanel(profile);
-    updatePauseButton("loading");
-    applyStatus({ label: "Course Status", message: "Loading course assets.", tone: "info" });
+async function waitForFonts() {
+    if (!document.fonts?.ready) return;
+    await Promise.race([
+        document.fonts.ready.catch(() => undefined),
+        new Promise((resolve) => window.setTimeout(resolve, 1200))
+    ]);
+}
 
-    const controls = new InputController();
-    window.hillCruzeControls = controls;
-    bindKeyboard(controls);
-    bindMobileControls(controls);
+async function initializeGame() {
+    updateLoader({
+        state: "loading",
+        label: "Booting",
+        title: "Preparing Hill Cruze",
+        message: "Warming up the renderer, fonts, and run systems.",
+        progress: 0.06
+    });
 
-    const game = new Phaser.Game({
+    await waitForFonts();
+
+    if (gameInstance) return gameInstance;
+
+    gameInstance = new Phaser.Game({
         type: Phaser.AUTO,
         parent: "phaser-root",
         width: WORLD.width,
         height: WORLD.height,
         backgroundColor: "#08111a",
+        render: {
+            antialias: true,
+            powerPreference: "high-performance",
+            pixelArt: false,
+            roundPixels: true
+        },
+        fps: {
+            target: 60,
+            smoothStep: true
+        },
         scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -202,14 +246,58 @@ document.addEventListener("DOMContentLoaded", () => {
         scene: [BootScene, PreloadScene, MenuScene, RunScene, MilestoneScene, PauseScene, GameOverScene]
     });
 
-    document.getElementById("pauseToggleBtn").addEventListener("click", () => togglePause(game));
+    return gameInstance;
+}
 
-    window.addEventListener("hill-cruze:toggle-pause", () => togglePause(game));
+document.addEventListener("DOMContentLoaded", () => {
+    const profile = getProfile();
+    updateProfilePanel(profile);
+    updatePauseButton("loading");
+    applyStatus({ label: "Course Status", message: "Loading course assets.", tone: "info" });
+    updateLoader({
+        state: "loading",
+        label: "Booting",
+        title: "Preparing Hill Cruze",
+        message: "Checking the page shell before the game boots.",
+        progress: 0.02
+    });
+
+    const controls = new InputController();
+    window.hillCruzeControls = controls;
+    bindKeyboard(controls);
+    bindMobileControls(controls);
+
+    document.getElementById("pauseToggleBtn").addEventListener("click", () => {
+        if (gameInstance) togglePause(gameInstance);
+    });
+    document.getElementById("gameLoaderRetry").addEventListener("click", () => window.location.reload());
+
+    window.addEventListener("hill-cruze:toggle-pause", () => {
+        if (gameInstance) togglePause(gameInstance);
+    });
     window.addEventListener("hill-cruze:mode", (event) => {
         document.body.dataset.mode = event.detail.mode;
         updatePauseButton(event.detail.mode);
+        if (event.detail.mode === "menu" || event.detail.mode === "run") hideLoaderSoon();
     });
     window.addEventListener("hill-cruze:status", (event) => applyStatus(event.detail));
     window.addEventListener("hill-cruze:hud", (event) => updateHud(event.detail));
     window.addEventListener("hill-cruze:profile", (event) => updateProfilePanel(event.detail.profile));
+    window.addEventListener("hill-cruze:loader", (event) => updateLoader(event.detail));
+
+    initializeGame().catch((error) => {
+        console.error("Unable to initialize Hill Cruze.", error);
+        updateLoader({
+            state: "error",
+            label: "Load Error",
+            title: "Hill Cruze Could Not Start",
+            message: "The game hit a startup error. Retry the load and check the console for details.",
+            progress: 1
+        });
+        applyStatus({
+            label: "Load Error",
+            message: "Game startup failed. Retry the load.",
+            tone: "warn"
+        });
+    });
 });

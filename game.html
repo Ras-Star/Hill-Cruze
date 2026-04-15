@@ -52,6 +52,21 @@
         <section class="game-stage">
             <div id="phaser-root" class="phaser-root"></div>
 
+            <div class="game-loader" id="gameLoader" data-state="loading" aria-live="polite">
+                <div class="game-loader__panel">
+                    <span class="game-loader__eyebrow" id="gameLoaderEyebrow">Booting</span>
+                    <strong class="game-loader__title" id="gameLoaderTitle">Preparing Hill Cruze</strong>
+                    <p class="game-loader__message" id="gameLoaderMessage">Warming up the renderer, fonts, and run systems.</p>
+                    <div class="game-loader__progress">
+                        <div class="game-loader__progress-fill" id="gameLoaderFill"></div>
+                    </div>
+                    <span class="game-loader__percent" id="gameLoaderPercent">0%</span>
+                    <button class="btn btn-arcade rounded-pill px-4 game-loader__retry" id="gameLoaderRetry" type="button">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Retry Load
+                    </button>
+                </div>
+            </div>
+
             <div class="hud-corner hud-corner--left">
                 <div class="hud-mini hud-mini--score">
                     <span>Score</span>

@@ -41,6 +41,17 @@ const POWERUPS = {
 };
 
 const LANE_LABELS = ["Left", "Center", "Right"];
+const PLAYER = {
+    originY: 0.88,
+    width: 244,
+    height: 166,
+    duckHeight: 138,
+    colliderWidth: 92,
+    colliderHeight: 92,
+    colliderDuckWidth: 108,
+    colliderDuckHeight: 56,
+    colliderBottomInset: 6
+};
 
 function emit(eventName, detail) {
     window.dispatchEvent(new CustomEvent(`hill-cruze:${eventName}`, { detail }));
@@ -123,6 +134,14 @@ export class BootScene extends Phaser.Scene {
     }
 
     create() {
+        emit("loader", {
+            state: "loading",
+            label: "Booting",
+            title: "Preparing Hill Cruze",
+            message: "Generating procedural textures and initializing the renderer.",
+            progress: 0.08
+        });
+
         const g = this.make.graphics({ x: 0, y: 0, add: false });
 
         g.fillStyle(0xffffff, 0.16).fillRect(0, 10, 260, 18).fillRect(24, 44, 220, 10).fillRect(44, 72, 176, 8);
@@ -167,6 +186,13 @@ export class PreloadScene extends Phaser.Scene {
     preload() {
         emit("mode", { mode: "loading" });
         emit("status", { label: "Course Status", message: "Loading art and lane systems.", tone: "info" });
+        emit("loader", {
+            state: "loading",
+            label: "Loading",
+            title: "Loading Course Assets",
+            message: "Streaming backgrounds, sprites, and run logic.",
+            progress: 0.12
+        });
 
         this.cameras.main.setBackgroundColor("#07111a");
         this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x07111a, 1);
@@ -195,12 +221,41 @@ export class PreloadScene extends Phaser.Scene {
         this.load.on("progress", (value) => {
             bar.width = 532 * value;
             percent.setText(`${Math.round(value * 100)}%`);
+            emit("loader", {
+                state: "loading",
+                label: "Loading",
+                title: "Loading Course Assets",
+                message: "Streaming backgrounds, sprites, and run logic.",
+                progress: 0.12 + (value * 0.78)
+            });
+        });
+
+        this.load.on("loaderror", (file) => {
+            emit("loader", {
+                state: "error",
+                label: "Load Error",
+                title: "Asset Load Failed",
+                message: `Unable to load ${file.key}. Retry the page load.`,
+                progress: 1
+            });
+            emit("status", {
+                label: "Load Error",
+                message: `Asset load failed for ${file.key}. Retry the page load.`,
+                tone: "warn"
+            });
         });
 
         this.load.on("complete", () => {
             label.setText("Course Ready");
             status.setText("Entering the staging menu");
             emit("status", { label: "Course Status", message: "Course ready. Entering the staging menu.", tone: "info" });
+            emit("loader", {
+                state: "loading",
+                label: "Ready",
+                title: "Course Ready",
+                message: "Finalizing the staging menu.",
+                progress: 1
+            });
             this.time.delayedCall(220, () => this.scene.start("MenuScene"));
         });
 
@@ -356,6 +411,7 @@ export class RunScene extends Phaser.Scene {
 
         this.currentLane = 1;
         this.targetLane = 1;
+        this.playerCollisionLane = 1;
         this.playerX = this.track.laneBottomX[this.currentLane];
         this.playerYOffset = 0;
         this.playerVelocityY = 0;
@@ -402,8 +458,8 @@ export class RunScene extends Phaser.Scene {
         const bike = getCatalogItem("bikes", this.profile.selectedBike);
         this.playerShadow = this.add.ellipse(this.playerX, this.track.playerGroundY + 12, 140, 44, 0x000000, 0.22).setDepth(5);
         this.playerAura = this.add.circle(this.playerX, this.track.playerGroundY - 84, 108, rider.accent, 0.12).setDepth(5.3);
-        this.player = this.add.sprite(this.playerX, this.track.playerGroundY, "cyclist").setOrigin(0.5, 1).setDepth(6);
-        this.player.setDisplaySize(244, 166);
+        this.player = this.add.sprite(this.playerX, this.track.playerGroundY, "cyclist").setOrigin(0.5, PLAYER.originY).setDepth(6);
+        this.player.setDisplaySize(PLAYER.width, PLAYER.height);
         this.player.setTint(rider.accent, rider.suit, bike.frame, bike.trim);
 
         this.cameras.main.setRoundPixels(true);
@@ -417,7 +473,7 @@ export class RunScene extends Phaser.Scene {
     }
 
     update(_, delta) {
-        const dt = delta / 1000;
+        const dt = Math.min(delta / 1000, 0.033);
         if (this.finished) return;
 
         this.elapsedRunTime += dt;
@@ -450,6 +506,7 @@ export class RunScene extends Phaser.Scene {
         }
 
         this.playerX = Phaser.Math.Linear(this.playerX, this.track.laneBottomX[this.targetLane], Math.min(1, dt * 12));
+        this.playerCollisionLane = this.getClosestLane(this.playerX);
         this.ducking = duckHeld;
 
         if (jumpPressed && this.isGrounded && liveRun) {
@@ -519,6 +576,19 @@ export class RunScene extends Phaser.Scene {
 
     changeLane(direction) {
         this.targetLane = Phaser.Math.Clamp(this.targetLane + direction, 0, 2);
+    }
+
+    getClosestLane(x) {
+        let closestLane = 0;
+        let minDistance = Number.POSITIVE_INFINITY;
+        this.track.laneBottomX.forEach((laneX, index) => {
+            const distance = Math.abs(laneX - x);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestLane = index;
+            }
+        });
+        return closestLane;
     }
 
     getPerspectivePoint(lane, progress) {
@@ -642,15 +712,15 @@ export class RunScene extends Phaser.Scene {
 
         this.player.x = this.playerX;
         this.player.y = groundY + this.playerYOffset + bob;
-        this.player.setDisplaySize(244, this.ducking ? 136 : 166);
+        this.player.setDisplaySize(PLAYER.width, this.ducking ? PLAYER.duckHeight : PLAYER.height);
         this.player.setRotation(lean + (this.isGrounded ? Math.sin(this.floatTime * 7) * 0.018 : -0.06));
 
         this.playerShadow.x = this.playerX;
-        this.playerShadow.y = groundY + 14;
+        this.playerShadow.y = groundY + 18;
         this.playerShadow.setScale(this.isGrounded ? 1 : Math.max(0.55, 1 - (Math.abs(this.playerYOffset) / 280)));
 
         this.playerAura.x = this.playerX;
-        this.playerAura.y = this.player.y - 92;
+        this.playerAura.y = this.player.y - 108;
         this.playerAura.setFillStyle(rider.accent, 0.1 + (this.powerTimers.rush > 0 ? 0.06 : 0));
         this.playerAura.setScale(0.96 + Math.sin(this.time.now * 0.004) * 0.05);
     }
@@ -799,7 +869,7 @@ export class RunScene extends Phaser.Scene {
 
     spawnObstacle(type, lane, options = {}) {
         const spec = OBSTACLES[type];
-        const sprite = this.add.sprite(0, 0, spec.key).setDepth(6);
+        const sprite = this.add.sprite(0, 0, spec.key).setOrigin(0.5, 1).setDepth(6);
         const glow = this.add.sprite(0, 0, "danger-glow").setDepth(5.2);
         const shadow = this.add.ellipse(0, 0, 124, 34, 0x000000, 0.2).setDepth(4.8);
         const warning = this.add.text(0, 0, `${LANE_LABELS[lane].toUpperCase()} ${spec.maneuver === "duck" ? "DUCK" : "JUMP"}`, {
@@ -826,7 +896,7 @@ export class RunScene extends Phaser.Scene {
     }
 
     spawnCoin(lane, options = {}) {
-        const sprite = this.add.sprite(0, 0, "coin").setDepth(6.4);
+        const sprite = this.add.sprite(0, 0, "coin").setOrigin(0.5).setDepth(6.4);
         const glow = this.add.sprite(0, 0, "reward-glow").setTint(0xffd866).setDepth(5.2);
         const shadow = this.add.ellipse(0, 0, 86, 24, 0x000000, 0.15).setDepth(4.8);
 
@@ -857,7 +927,7 @@ export class RunScene extends Phaser.Scene {
     }
 
     spawnPowerup(type, lane, options = {}) {
-        const sprite = this.add.sprite(0, 0, POWERUPS[type].key).setDepth(6.5);
+        const sprite = this.add.sprite(0, 0, POWERUPS[type].key).setOrigin(0.5).setDepth(6.5);
         const glow = this.add.sprite(0, 0, "reward-glow").setTint(POWERUPS[type].accent).setDepth(5.3);
         const shadow = this.add.ellipse(0, 0, 92, 26, 0x000000, 0.15).setDepth(4.8);
 
@@ -896,7 +966,7 @@ export class RunScene extends Phaser.Scene {
                     this.threatLevels[entity.lane] = Math.max(this.threatLevels[entity.lane], 1 - (entity.progress * 0.72));
                 }
 
-                if (Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getObstacleBounds(entity))) {
+                if (entity.lane === this.playerCollisionLane && Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getObstacleBounds(entity))) {
                     this.destroyEntity(entity);
                     this.handleObstacleHit(spec);
                     return false;
@@ -906,7 +976,7 @@ export class RunScene extends Phaser.Scene {
             }
 
             if (entity.kind === "coin") {
-                if (Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity, 0.56))) {
+                if (entity.lane === this.playerCollisionLane && Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity, 0.56))) {
                     this.coins += 1;
                     this.score += 14;
                     this.destroyEntity(entity);
@@ -916,7 +986,7 @@ export class RunScene extends Phaser.Scene {
                 return true;
             }
 
-            if (Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity, 0.62))) {
+            if (entity.lane === this.playerCollisionLane && Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity, 0.62))) {
                 this.applyPowerup(entity.type);
                 this.destroyEntity(entity);
                 return false;
@@ -963,9 +1033,10 @@ export class RunScene extends Phaser.Scene {
     }
 
     getPlayerBounds() {
-        const width = this.ducking ? 108 : 102;
-        const height = this.ducking ? 68 : 116;
-        return new Phaser.Geom.Rectangle(this.player.x - (width / 2), this.player.y - height, width, height);
+        const width = this.ducking ? PLAYER.colliderDuckWidth : PLAYER.colliderWidth;
+        const height = this.ducking ? PLAYER.colliderDuckHeight : PLAYER.colliderHeight;
+        const bottom = this.player.y - PLAYER.colliderBottomInset;
+        return new Phaser.Geom.Rectangle(this.player.x - (width / 2), bottom - height, width, height);
     }
 
     getObstacleBounds(entity) {
@@ -978,7 +1049,7 @@ export class RunScene extends Phaser.Scene {
     getPickupBounds(entity, factor) {
         const width = entity.sprite.displayWidth * factor;
         const height = entity.sprite.displayHeight * factor;
-        return new Phaser.Geom.Rectangle(entity.sprite.x - (width / 2), entity.sprite.y - height, width, height);
+        return new Phaser.Geom.Rectangle(entity.sprite.x - (width / 2), entity.sprite.y - (height / 2), width, height);
     }
 
     applyPowerup(type) {
