@@ -69,29 +69,128 @@ function createButton(scene, x, y, label, onClick, options = {}) {
     const { width = 360, variant = "primary" } = options;
     const container = scene.add.container(x, y);
     const isPrimary = variant === "primary";
-    const fillColor = isPrimary ? 0xffb347 : 0x08111a;
-    const fillAlpha = isPrimary ? 1 : 0.78;
-    const strokeColor = isPrimary ? 0xffffff : 0xfff1d4;
+    const fillColor = isPrimary ? 0xffb347 : 0x0b1724;
+    const fillAlpha = isPrimary ? 1 : 0.82;
+    const strokeColor = isPrimary ? 0xffffff : 0xffe8bd;
     const textColor = isPrimary ? "#160d06" : "#f5f8ff";
-    const bg = scene.add.rectangle(0, 0, width, 68, fillColor, fillAlpha).setStrokeStyle(2, strokeColor, isPrimary ? 0.26 : 0.18);
+    const shadow = scene.add.ellipse(0, 34, width * 0.72, 24, isPrimary ? 0xff9a31 : 0x08111a, isPrimary ? 0.26 : 0.18);
+    const glow = scene.add.rectangle(0, 0, width + 10, 82, isPrimary ? 0xffd27a : 0x7dc8ff, isPrimary ? 0.12 : 0.08).setAlpha(isPrimary ? 0.14 : 0.08);
+    const bg = scene.add.rectangle(0, 0, width, 68, fillColor, fillAlpha).setStrokeStyle(2, strokeColor, isPrimary ? 0.28 : 0.18);
+    const accent = scene.add.rectangle(0, -26, width * 0.82, 3, 0xffffff, isPrimary ? 0.46 : 0.18);
+    const shine = scene.add.rectangle((-width / 2) + 38, -1, 26, 78, 0xffffff, isPrimary ? 0.14 : 0.08).setAngle(16);
     const text = scene.add.text(0, 0, label, {
-        fontFamily: "Sora",
-        fontSize: "24px",
-        fontStyle: "700",
+        fontFamily: "Teko",
+        fontSize: "34px",
+        fontStyle: "600",
+        letterSpacing: 4,
         color: textColor
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setY(1);
 
-    container.add([bg, text]);
+    container.add([shadow, glow, bg, accent, shine, text]);
     container.setSize(width, 68).setInteractive({ useHandCursor: true });
-    container.on("pointerover", () => {
-        bg.setScale(1.02);
-        bg.setAlpha(isPrimary ? 1 : 0.9);
+
+    const tweenTo = (state) => {
+        scene.tweens.killTweensOf([container, shadow, glow, shine, accent, text]);
+        scene.tweens.add({
+            targets: container,
+            y: y + state.offsetY,
+            scaleX: state.scale,
+            scaleY: state.scale,
+            duration: state.duration,
+            ease: state.ease
+        });
+        scene.tweens.add({
+            targets: shadow,
+            alpha: state.shadowAlpha,
+            scaleX: state.shadowScaleX,
+            scaleY: state.shadowScaleY,
+            duration: state.duration,
+            ease: state.ease
+        });
+        scene.tweens.add({
+            targets: glow,
+            alpha: state.glowAlpha,
+            scaleX: state.glowScale,
+            scaleY: state.glowScale,
+            duration: state.duration,
+            ease: state.ease
+        });
+        scene.tweens.add({
+            targets: shine,
+            x: state.shineX,
+            alpha: state.shineAlpha,
+            duration: state.duration + 30,
+            ease: "Sine.Out"
+        });
+        scene.tweens.add({
+            targets: accent,
+            alpha: state.accentAlpha,
+            duration: state.duration,
+            ease: state.ease
+        });
+        scene.tweens.add({
+            targets: text,
+            y: 1 + state.textOffset,
+            duration: state.duration,
+            ease: state.ease
+        });
+    };
+
+    const restState = {
+        offsetY: 0,
+        scale: 1,
+        shadowAlpha: isPrimary ? 0.26 : 0.18,
+        shadowScaleX: 1,
+        shadowScaleY: 1,
+        glowAlpha: isPrimary ? 0.14 : 0.08,
+        glowScale: 1,
+        shineX: (-width / 2) + 38,
+        shineAlpha: isPrimary ? 0.14 : 0.08,
+        accentAlpha: isPrimary ? 0.46 : 0.18,
+        textOffset: 0,
+        duration: 140,
+        ease: "Quad.Out"
+    };
+    const hoverState = {
+        offsetY: -4,
+        scale: 1.025,
+        shadowAlpha: isPrimary ? 0.34 : 0.22,
+        shadowScaleX: 1.06,
+        shadowScaleY: 1.14,
+        glowAlpha: isPrimary ? 0.22 : 0.14,
+        glowScale: 1.04,
+        shineX: (width / 2) - 24,
+        shineAlpha: isPrimary ? 0.22 : 0.12,
+        accentAlpha: isPrimary ? 0.68 : 0.28,
+        textOffset: -1,
+        duration: 150,
+        ease: "Quad.Out"
+    };
+    const pressState = {
+        offsetY: 1,
+        scale: 0.988,
+        shadowAlpha: isPrimary ? 0.18 : 0.12,
+        shadowScaleX: 0.94,
+        shadowScaleY: 0.84,
+        glowAlpha: isPrimary ? 0.12 : 0.07,
+        glowScale: 0.96,
+        shineX: (-width / 2) + 52,
+        shineAlpha: isPrimary ? 0.18 : 0.1,
+        accentAlpha: isPrimary ? 0.36 : 0.16,
+        textOffset: 2,
+        duration: 90,
+        ease: "Quad.Out"
+    };
+
+    tweenTo(restState);
+
+    container.on("pointerover", () => tweenTo(hoverState));
+    container.on("pointerout", () => tweenTo(restState));
+    container.on("pointerdown", () => tweenTo(pressState));
+    container.on("pointerup", () => {
+        tweenTo(hoverState);
+        onClick();
     });
-    container.on("pointerout", () => {
-        bg.setScale(1);
-        bg.setAlpha(fillAlpha);
-    });
-    container.on("pointerdown", onClick);
     return container;
 }
 
@@ -672,6 +771,36 @@ export class RunScene extends Phaser.Scene {
         g.closePath();
         g.fillPath();
 
+        for (let marker = 1; marker <= 9; marker += 1) {
+            const progress = marker / 10;
+            const left = this.getPerspectivePoint(0, progress);
+            const right = this.getPerspectivePoint(2, progress);
+            g.lineStyle(Phaser.Math.Linear(1.5, 6, progress), 0xffffff, Phaser.Math.Linear(0.035, 0.12, progress));
+            g.beginPath();
+            g.moveTo(left.x, left.y + 6);
+            g.lineTo(right.x, right.y + 6);
+            g.strokePath();
+        }
+
+        for (let marker = 1; marker <= 11; marker += 1) {
+            const progress = marker / 12;
+            const left = this.getPerspectivePoint(0, progress);
+            const right = this.getPerspectivePoint(2, progress);
+            const stripLength = Phaser.Math.Linear(16, 62, progress);
+            const stripOffset = Phaser.Math.Linear(8, 26, progress);
+            const stripWidth = Phaser.Math.Linear(2, 8, progress);
+            const stripColor = marker % 2 === 0 ? accent : 0xffffff;
+            const stripAlpha = Phaser.Math.Linear(0.08, 0.24, progress);
+
+            g.lineStyle(stripWidth, stripColor, stripAlpha);
+            g.beginPath();
+            g.moveTo(left.x - stripOffset, left.y + 10);
+            g.lineTo(left.x - stripOffset - stripLength, left.y + 28);
+            g.moveTo(right.x + stripOffset, right.y + 10);
+            g.lineTo(right.x + stripOffset + stripLength, right.y + 28);
+            g.strokePath();
+        }
+
         this.threatLevels.forEach((threat, lane) => {
             const active = lane === this.targetLane;
             const color = threat > 0.24 ? 0xff5d68 : (active ? 0xffffff : accent);
@@ -702,6 +831,19 @@ export class RunScene extends Phaser.Scene {
         const activeLanePoint = this.getPerspectivePoint(this.targetLane, 0.9);
         fx.fillStyle(0xffffff, 0.14);
         fx.fillEllipse(activeLanePoint.x, activeLanePoint.y + 8, 168, 34);
+
+        const bottomLanePoint = this.getPerspectivePoint(this.targetLane, 1);
+        const chevronWidth = 42;
+        fx.fillStyle(0xffffff, 0.16);
+        fx.beginPath();
+        fx.moveTo(bottomLanePoint.x - chevronWidth, bottomLanePoint.y + 18);
+        fx.lineTo(bottomLanePoint.x, bottomLanePoint.y + 42);
+        fx.lineTo(bottomLanePoint.x + chevronWidth, bottomLanePoint.y + 18);
+        fx.lineTo(bottomLanePoint.x + 22, bottomLanePoint.y + 18);
+        fx.lineTo(bottomLanePoint.x, bottomLanePoint.y + 30);
+        fx.lineTo(bottomLanePoint.x - 22, bottomLanePoint.y + 18);
+        fx.closePath();
+        fx.fillPath();
     }
 
     updatePlayerVisuals() {
@@ -1026,8 +1168,13 @@ export class RunScene extends Phaser.Scene {
         const scale = this.getPerspectiveScale(entity.progress, 0.24, entity.kind === "powerup" ? 0.94 : 0.86);
         entity.sprite.setPosition(point.x, point.y - (baseLift * scale));
         entity.sprite.setScale(scale);
+        entity.sprite.setRotation(entity.kind === "coin"
+            ? (this.time.now * 0.005) + entity.phase
+            : Math.sin((this.time.now * 0.004) + entity.phase) * 0.08);
         entity.sprite.setDepth(6.2 + entity.progress);
-        entity.glow.setPosition(point.x, point.y - (baseLift * scale)).setScale(scale * 0.84);
+        entity.glow.setPosition(point.x, point.y - (baseLift * scale))
+            .setScale(scale * 0.84)
+            .setAlpha(entity.kind === "powerup" ? 0.44 : 0.28 + Math.sin((this.time.now * 0.008) + entity.phase) * 0.06);
         entity.shadow.setPosition(point.x, point.y + 8).setScale(scale * 0.85, scale * 0.85);
         return true;
     }

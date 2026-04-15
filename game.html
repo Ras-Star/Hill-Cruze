@@ -127,24 +127,30 @@
             </div>
 
             <div class="mobile-control-zone mobile-control-zone--left" id="mobileControls">
-                <button class="mobile-controls__btn" data-action="left" type="button" aria-label="Move left">
-                    <i class="bi bi-arrow-left"></i>
-                </button>
-                <button class="mobile-controls__btn" data-action="right" type="button" aria-label="Move right">
-                    <i class="bi bi-arrow-right"></i>
-                </button>
+                <span class="mobile-control-zone__label">Steer</span>
+                <div class="mobile-control-zone__cluster">
+                    <button class="mobile-controls__btn" data-action="left" type="button" aria-label="Move left">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <button class="mobile-controls__btn" data-action="right" type="button" aria-label="Move right">
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="mobile-control-zone mobile-control-zone--right">
-                <button class="mobile-controls__btn" data-action="jump" type="button" aria-label="Jump">
-                    <i class="bi bi-arrow-up"></i>
-                </button>
-                <button class="mobile-controls__btn mobile-controls__btn--accent" data-action="boost" type="button" aria-label="Boost">
-                    <i class="bi bi-lightning-charge-fill"></i>
-                </button>
-                <button class="mobile-controls__btn" data-action="duck" type="button" aria-label="Duck">
-                    <i class="bi bi-arrow-down"></i>
-                </button>
+                <span class="mobile-control-zone__label">Actions</span>
+                <div class="mobile-control-zone__cluster mobile-control-zone__cluster--actions">
+                    <button class="mobile-controls__btn" data-action="jump" type="button" aria-label="Jump">
+                        <i class="bi bi-arrow-up"></i>
+                    </button>
+                    <button class="mobile-controls__btn mobile-controls__btn--accent" data-action="boost" type="button" aria-label="Boost">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </button>
+                    <button class="mobile-controls__btn" data-action="duck" type="button" aria-label="Duck">
+                        <i class="bi bi-arrow-down"></i>
+                    </button>
+                </div>
             </div>
         </section>
     </main>

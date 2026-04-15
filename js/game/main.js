@@ -172,7 +172,15 @@ function bindMobileControls(controller) {
     document.querySelectorAll("[data-action]").forEach((button) => {
         const action = button.dataset.action;
         const setState = (active) => (event) => {
+            button.classList.toggle("is-pressed", active);
             controller.set(action, active);
+            if (active && typeof button.setPointerCapture === "function") {
+                try {
+                    button.setPointerCapture(event.pointerId);
+                } catch {
+                    // Ignore browsers that reject capture for synthetic interactions.
+                }
+            }
             event.preventDefault();
         };
 
@@ -180,6 +188,10 @@ function bindMobileControls(controller) {
         button.addEventListener("pointerup", setState(false));
         button.addEventListener("pointercancel", setState(false));
         button.addEventListener("pointerleave", setState(false));
+        button.addEventListener("lostpointercapture", () => {
+            button.classList.remove("is-pressed");
+            controller.set(action, false);
+        });
     });
 }
 
