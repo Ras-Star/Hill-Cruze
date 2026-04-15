@@ -6,190 +6,232 @@
     <title>Hill Cruze | Endless Cyclist</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="landing-shell">
     <div class="landing-backdrop"></div>
-    <header class="site-header container py-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+    <header class="site-header container py-4 py-lg-5">
+        <div class="stage-topbar">
             <a class="brand-mark text-decoration-none" href="index.html">
                 <span class="brand-mark__icon"><i class="bi bi-bicycle"></i></span>
                 <span>
                     <strong>Hill Cruze</strong>
-                    <small>Endless cycling across African terrain</small>
+                    <small>Hybrid arcade downhill staging</small>
                 </span>
             </a>
-            <a class="btn btn-outline-light rounded-pill px-4" href="game.html">
-                <i class="bi bi-play-circle me-2"></i>Play Now
-            </a>
+            <div class="stage-topbar__actions">
+                <a class="topbar-chip text-decoration-none" href="#ride-loadout">Tune Loadout</a>
+                <a class="btn btn-arcade rounded-pill px-4" href="game.html">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>Start Ride
+                </a>
+            </div>
         </div>
     </header>
 
     <main class="container pb-5">
-        <section class="hero-panel row g-4 align-items-stretch">
-            <div class="col-lg-7">
-                <div class="hero-copy h-100">
-                    <p class="eyebrow">Phaser-powered endless ride</p>
-                    <h1>Push farther, unlock bolder looks, and ride through shifting African biomes.</h1>
-                    <p class="hero-lead">
-                        Hill Cruze now uses scene-based gameplay, milestone biome swaps, cosmetic progression,
-                        token rewards, and responsive controls built for both desktop and mobile.
-                    </p>
-                    <div class="d-flex flex-wrap gap-3 mt-4">
-                        <a class="btn btn-sunrise btn-lg rounded-pill px-4" href="game.html">
-                            <i class="bi bi-lightning-charge-fill me-2"></i>Start Ride
-                        </a>
-                        <a class="btn btn-outline-light btn-lg rounded-pill px-4" href="#how-to-play">
-                            <i class="bi bi-signpost-split me-2"></i>How It Plays
-                        </a>
-                    </div>
-                    <div class="hero-metrics row g-3 mt-4">
-                        <div class="col-sm-4">
-                            <div class="metric-card">
-                                <span>Best Score</span>
-                                <strong id="bestScore">0</strong>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="metric-card">
-                                <span>Longest Distance</span>
-                                <strong id="longestDistance">0 m</strong>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="metric-card">
-                                <span>Total Tokens</span>
-                                <strong id="totalCoins">0</strong>
-                            </div>
-                        </div>
-                    </div>
+        <section class="stage-hero">
+            <div class="stage-hero__copy">
+                <p class="eyebrow">Hybrid Arcade Endless Rider</p>
+                <h1>Ride hard. Read the line. Own the biome.</h1>
+                <p class="hero-lead">
+                    Hill Cruze now stages every run like a race-day launch: sharper HUD thinking, stronger pacing,
+                    bold biome mood, and a faster route from your loadout to the live track.
+                </p>
+                <div class="hero-actions">
+                    <a class="btn btn-arcade btn-lg rounded-pill px-4" href="game.html">
+                        <i class="bi bi-play-circle-fill me-2"></i>Launch Run
+                    </a>
+                    <a class="btn btn-outline-light btn-lg rounded-pill px-4" href="#run-guide">
+                        <i class="bi bi-signpost-split me-2"></i>Read The Line
+                    </a>
+                </div>
+                <div class="stat-strip">
+                    <article class="metric-card">
+                        <span>Best Score</span>
+                        <strong id="bestScore">0</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>Longest Distance</span>
+                        <strong id="longestDistance">0 m</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>Total Tokens</span>
+                        <strong id="totalCoins">0</strong>
+                    </article>
                 </div>
             </div>
-            <div class="col-lg-5">
-                <div class="preview-card h-100">
-                    <div class="preview-card__image" id="profileBackdrop">
-                        <div class="preview-card__overlay">
-                            <p class="eyebrow mb-2">Selected Pack</p>
-                            <h2 id="selectedBackgroundLabel">Savanna Dawn</h2>
-                            <p id="selectedBadge">Trail Starter</p>
+
+            <aside class="hero-preview">
+                <div class="hero-preview__visual" id="profileBackdrop">
+                    <div class="hero-preview__overlay">
+                        <div class="hero-preview__meta">
+                            <p class="eyebrow mb-1">Staging Pack</p>
+                            <span id="selectedBadge">Trail Starter</span>
                         </div>
-                    </div>
-                    <div class="preview-card__body">
-                        <div class="preview-chip-group">
-                            <span class="preview-chip" id="selectedRider">Ember Rider</span>
-                            <span class="preview-chip" id="selectedBike">Classic Frame</span>
-                            <span class="preview-chip" id="nextUnlock">Next reward: River Rider</span>
-                        </div>
-                        <p class="mb-0 small text-light-emphasis">
-                            Background packs change your starting showcase theme and your hub visuals while every run
-                            still cycles through the full biome lineup.
+                        <h2 id="selectedBackgroundLabel">Savanna Dawn</h2>
+                        <p class="hero-preview__copy">
+                            Your selected pack defines the hub mood and opening menu while every run still rotates
+                            through the full biome lineup.
                         </p>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="row g-4 mt-2">
-            <div class="col-lg-4">
-                <div class="glass-panel h-100">
-                    <p class="eyebrow">Loadout</p>
-                    <h2 class="section-title">Choose your unlocked style</h2>
-                    <div class="vstack gap-3 mt-4">
-                        <label class="field-label" for="riderSelect">Rider Skin</label>
-                        <select class="form-select form-select-lg field-select" id="riderSelect"></select>
-
-                        <label class="field-label" for="bikeSelect">Bike Skin</label>
-                        <select class="form-select form-select-lg field-select" id="bikeSelect"></select>
-
-                        <label class="field-label" for="badgeSelect">Badge Title</label>
-                        <select class="form-select form-select-lg field-select" id="badgeSelect"></select>
-
-                        <label class="field-label" for="backgroundSelect">Hub Background Pack</label>
-                        <select class="form-select form-select-lg field-select" id="backgroundSelect"></select>
+                    <div class="hero-preview__chips">
+                        <span class="preview-chip" id="selectedRider">Ember Rider</span>
+                        <span class="preview-chip" id="selectedBike">Classic Frame</span>
+                        <span class="preview-chip" id="nextUnlock">Next reward: River Rider</span>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-8">
-                <div class="glass-panel h-100">
-                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-                        <div>
-                            <p class="eyebrow">Unlock Roadmap</p>
-                            <h2 class="section-title">Reward pacing across runs</h2>
+                <div class="hero-preview__footer">
+                    <div>
+                        <span>Current route</span>
+                        <strong>Three lanes, live boosts, escalating biomes</strong>
+                    </div>
+                    <a class="link-arrow text-decoration-none" href="#progressionRail">
+                        Track Rewards <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </aside>
+        </section>
+
+        <section class="stage-grid mt-4" id="ride-loadout">
+            <div class="stage-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Loadout Garage</p>
+                        <h2 class="section-title">Choose your unlocked setup</h2>
+                    </div>
+                    <p class="section-copy mb-0">
+                        Cards update the same stored profile data as before, but keep the pre-run flow fast and visual.
+                    </p>
+                </div>
+
+                <div class="loadout-stack mt-4">
+                    <section class="loadout-group">
+                        <div class="loadout-group__head">
+                            <div>
+                                <span class="field-label">Rider Skin</span>
+                                <p class="loadout-copy mb-0">Accent energy and rider identity for the run intro.</p>
+                            </div>
                         </div>
-                        <a class="btn btn-outline-light rounded-pill px-4" href="game.html">
-                            <i class="bi bi-trophy me-2"></i>Earn More Tokens
-                        </a>
-                    </div>
-                    <div class="unlock-roadmap mt-4" id="unlockRoadmap"></div>
+                        <div class="loadout-grid" id="riderOptions"></div>
+                    </section>
+
+                    <section class="loadout-group">
+                        <div class="loadout-group__head">
+                            <div>
+                                <span class="field-label">Bike Frame</span>
+                                <p class="loadout-copy mb-0">Keep the chassis sharp before you hit the course.</p>
+                            </div>
+                        </div>
+                        <div class="loadout-grid" id="bikeOptions"></div>
+                    </section>
+
+                    <section class="loadout-group">
+                        <div class="loadout-group__head">
+                            <div>
+                                <span class="field-label">Badge Title</span>
+                                <p class="loadout-copy mb-0">Broadcast your progression across every menu and finish.</p>
+                            </div>
+                        </div>
+                        <div class="loadout-grid" id="badgeOptions"></div>
+                    </section>
+
+                    <section class="loadout-group">
+                        <div class="loadout-group__head">
+                            <div>
+                                <span class="field-label">Hub Background Pack</span>
+                                <p class="loadout-copy mb-0">Pick the biome mood that stages your next run.</p>
+                            </div>
+                        </div>
+                        <div class="loadout-grid loadout-grid--packs" id="backgroundOptions"></div>
+                    </section>
                 </div>
             </div>
-        </section>
 
-        <section class="glass-panel mt-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-                <div>
-                    <p class="eyebrow">Terrain Gallery</p>
-                    <h2 class="section-title">Biome set for scene changes</h2>
-                </div>
-                <p class="source-note mb-0">
-                    Background references are web-sourced, transformed into local WebP assets, and documented in
-                    the repo for later review.
-                </p>
-            </div>
-            <div class="terrain-grid mt-4" id="terrainGallery"></div>
-        </section>
-
-        <section class="glass-panel mt-4" id="how-to-play">
-            <p class="eyebrow">How To Play</p>
-            <h2 class="section-title">Seamless run flow</h2>
-            <div class="accordion custom-accordion mt-4" id="howToPlayAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#controlsPanel">
-                            Core controls
-                        </button>
-                    </h2>
-                    <div id="controlsPanel" class="accordion-collapse collapse show" data-bs-parent="#howToPlayAccordion">
-                        <div class="accordion-body">
-                            <div class="row g-3">
-                                <div class="col-md-6"><strong>Steer:</strong> Left / Right or A / D</div>
-                                <div class="col-md-6"><strong>Jump:</strong> Up / W / Space</div>
-                                <div class="col-md-6"><strong>Duck:</strong> Down / S</div>
-                                <div class="col-md-6"><strong>Boost:</strong> Shift or the on-screen pedal button</div>
+            <div class="stage-sidebar">
+                <section class="stage-card stage-card--compact" id="progressionRail">
+                    <div class="section-heading section-heading--stack">
+                        <div>
+                            <p class="eyebrow">Progression Rail</p>
+                            <h2 class="section-title">What the next runs unlock</h2>
+                        </div>
+                        <div class="progress-focus">
+                            <div class="progress-focus__item">
+                                <span>Stored Tokens</span>
+                                <strong id="totalCoinsFocus">0</strong>
+                            </div>
+                            <div class="progress-focus__item">
+                                <span>Current Pack</span>
+                                <strong id="selectedBackgroundSummary">Savanna Dawn</strong>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#progressionPanel">
-                            Progression and rewards
-                        </button>
-                    </h2>
-                    <div id="progressionPanel" class="accordion-collapse collapse" data-bs-parent="#howToPlayAccordion">
-                        <div class="accordion-body">
-                            Each run gives score, distance, and tokens. Distance milestones trigger biome swaps and
-                            bonus tokens, while total lifetime tokens unlock new rider looks, frames, badges, and hub
-                            background packs.
+                    <div class="unlock-rail mt-4" id="unlockRoadmap"></div>
+                </section>
+
+                <section class="stage-card stage-card--compact" id="run-guide">
+                    <div class="section-heading section-heading--stack">
+                        <div>
+                            <p class="eyebrow">Run Guide</p>
+                            <h2 class="section-title">Read the course fast</h2>
                         </div>
                     </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flowPanel">
-                            Scene flow
-                        </button>
-                    </h2>
-                    <div id="flowPanel" class="accordion-collapse collapse" data-bs-parent="#howToPlayAccordion">
-                        <div class="accordion-body">
-                            Boot, preload, menu, run, milestone, pause, and game-over moments all happen in Phaser,
-                            while Bootstrap frames the shell, stats, and responsive layout around the canvas.
-                        </div>
+                    <div class="quick-guide mt-4">
+                        <article class="guide-card">
+                            <span class="guide-card__icon"><i class="bi bi-arrows-angle-expand"></i></span>
+                            <h3>Hold the lane</h3>
+                            <p>Left and right commit your line. Hazards are now truthful to the lanes you can see.</p>
+                        </article>
+                        <article class="guide-card">
+                            <span class="guide-card__icon"><i class="bi bi-arrow-up-square"></i></span>
+                            <h3>Jump or duck</h3>
+                            <p>Low rocks and crates reward jumps, while branches read as duck-or-swap pressure.</p>
+                        </article>
+                        <article class="guide-card">
+                            <span class="guide-card__icon"><i class="bi bi-lightning-charge"></i></span>
+                            <h3>Burn boosts wisely</h3>
+                            <p>Boost speed is strong, but stamina and active powerups decide how long you can hold it.</p>
+                        </article>
                     </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="stage-card stage-card--footer mt-4">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Ride Flow</p>
+                    <h2 class="section-title">From staging to finish</h2>
                 </div>
+                <a class="btn btn-outline-light rounded-pill px-4" href="game.html">
+                    <i class="bi bi-trophy me-2"></i>Race For More Tokens
+                </a>
+            </div>
+
+            <div class="run-flow mt-4">
+                <article class="flow-card">
+                    <span>01</span>
+                    <h3>Stage the run</h3>
+                    <p>Pick a rider, frame, badge, and opening pack without breaking your launch momentum.</p>
+                </article>
+                <article class="flow-card">
+                    <span>02</span>
+                    <h3>Survive the lane mix</h3>
+                    <p>Build distance through sharp reads, quick swaps, and aggressive stamina management.</p>
+                </article>
+                <article class="flow-card">
+                    <span>03</span>
+                    <h3>Hit milestones</h3>
+                    <p>Biome changes and token bonuses keep the course escalating instead of staying static.</p>
+                </article>
+                <article class="flow-card">
+                    <span>04</span>
+                    <h3>Bank progression</h3>
+                    <p>Every finish pushes persistent unlocks that change how the next staging screen feels.</p>
+                </article>
             </div>
         </section>
     </main>

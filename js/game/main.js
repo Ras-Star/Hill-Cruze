@@ -54,22 +54,32 @@ function updateHud(detail) {
     document.getElementById("hudCoins").textContent = formatInteger(detail.coins);
     document.getElementById("hudSpeed").textContent = `${formatInteger(detail.speed)} km/h`;
     document.getElementById("hudBiome").textContent = detail.biome;
+    document.getElementById("hudWarning").textContent = detail.warning || "Clear track";
     document.getElementById("hudStaminaLabel").textContent = `${Math.round(detail.stamina)}%`;
     document.getElementById("hudStaminaFill").style.width = `${detail.stamina}%`;
+    document.getElementById("hudCountdown").textContent = detail.countdown || "";
 
     const container = document.getElementById("hudPowerups");
     container.innerHTML = "";
     if (!detail.powerups.length) {
-        container.innerHTML = `<span class="text-light-emphasis small">No active boosts</span>`;
-        return;
+        container.innerHTML = `<span class="powerup-empty">No active boosts</span>`;
+    } else {
+        detail.powerups.forEach((powerup) => {
+            const pill = document.createElement("span");
+            pill.className = "powerup-pill";
+            pill.textContent = powerup;
+            container.appendChild(pill);
+        });
     }
+}
 
-    detail.powerups.forEach((powerup) => {
-        const pill = document.createElement("span");
-        pill.className = "powerup-pill";
-        pill.textContent = powerup;
-        container.appendChild(pill);
-    });
+function applyStatus(detail = {}) {
+    const toast = document.getElementById("hudToast");
+    if (!toast) return;
+
+    toast.dataset.tone = detail.tone || "info";
+    document.getElementById("hudRunState").textContent = detail.label || "Course Status";
+    document.getElementById("hudStatusText").textContent = detail.message || "Course ready.";
 }
 
 function updatePauseButton(mode) {
@@ -88,7 +98,7 @@ function updatePauseButton(mode) {
         return;
     }
 
-    button.disabled = true;
+    button.disabled = mode !== "run" && mode !== "paused";
     button.innerHTML = `<i class="bi bi-pause-circle me-2"></i>Pause`;
 }
 
@@ -109,10 +119,9 @@ function bindKeyboard(controller) {
 
     window.addEventListener("keydown", (event) => {
         const action = map[event.code];
-        if (action) {
-            controller.set(action, true);
-            event.preventDefault();
-        }
+        if (!action) return;
+        controller.set(action, true);
+        event.preventDefault();
     });
 
     window.addEventListener("keyup", (event) => {
@@ -126,27 +135,28 @@ function bindKeyboard(controller) {
 function bindMobileControls(controller) {
     document.querySelectorAll("[data-action]").forEach((button) => {
         const action = button.dataset.action;
-        const press = (active) => (event) => {
+        const setState = (active) => (event) => {
             controller.set(action, active);
             event.preventDefault();
         };
 
-        button.addEventListener("pointerdown", press(true));
-        button.addEventListener("pointerup", press(false));
-        button.addEventListener("pointercancel", press(false));
-        button.addEventListener("pointerleave", press(false));
+        button.addEventListener("pointerdown", setState(true));
+        button.addEventListener("pointerup", setState(false));
+        button.addEventListener("pointercancel", setState(false));
+        button.addEventListener("pointerleave", setState(false));
     });
 }
 
 function togglePause(game) {
     if (game.scene.isActive("GameOverScene")) return;
     if (!game.scene.isActive("RunScene") && !game.scene.isPaused("RunScene")) return;
+
     const runScene = game.scene.getScene("RunScene");
     if (game.scene.isPaused("RunScene")) {
         if (game.scene.isActive("PauseScene")) game.scene.stop("PauseScene");
         game.scene.resume("RunScene");
         document.body.dataset.mode = "run";
-        document.getElementById("gameStatus").textContent = "Ride resumed.";
+        applyStatus({ label: "Run Live", message: "Ride resumed.", tone: "info" });
     } else {
         game.scene.pause("RunScene");
         game.scene.launch("PauseScene", { startBiomeId: runScene.startBiomeId });
@@ -157,7 +167,8 @@ function togglePause(game) {
 document.addEventListener("DOMContentLoaded", () => {
     const profile = getProfile();
     updateProfilePanel(profile);
-    updatePauseButton("menu");
+    updatePauseButton("loading");
+    applyStatus({ label: "Course Status", message: "Loading course assets.", tone: "info" });
 
     const controls = new InputController();
     window.hillCruzeControls = controls;
@@ -169,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
         parent: "phaser-root",
         width: WORLD.width,
         height: WORLD.height,
-        backgroundColor: "#0e1d2b",
+        backgroundColor: "#08111a",
         scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -186,9 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.dataset.mode = event.detail.mode;
         updatePauseButton(event.detail.mode);
     });
-    window.addEventListener("hill-cruze:status", (event) => {
-        document.getElementById("gameStatus").textContent = event.detail.message;
-    });
+    window.addEventListener("hill-cruze:status", (event) => applyStatus(event.detail));
     window.addEventListener("hill-cruze:hud", (event) => updateHud(event.detail));
     window.addEventListener("hill-cruze:profile", (event) => updateProfilePanel(event.detail.profile));
 });

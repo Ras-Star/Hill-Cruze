@@ -12,15 +12,13 @@ export const RUN_CONFIG = {
     baseSpeed: 580,
     maxBonusSpeed: 340,
     boostMultiplier: 1.3,
-    lateralAcceleration: 980,
-    lateralFriction: 0.88,
-    maxLateralSpeed: 440,
     jumpVelocity: 1100,
     gravity: 2500,
+    countdownDuration: 3,
+    warmupDuration: 1.15,
     milestoneSpacing: 1400,
-    obstacleInterval: [1050, 1650],
-    powerupInterval: [5400, 7600],
-    coinInterval: [2200, 3400]
+    patternInterval: [900, 1320],
+    powerupInterval: [5200, 7200]
 };
 
 export const BIOMES = [

@@ -6,7 +6,7 @@
     <title>Hill Cruze | Ride The Terrain</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -14,122 +14,121 @@
 <body class="game-shell" data-mode="menu">
     <div class="game-shell__bg"></div>
 
-    <header class="container-fluid px-3 px-lg-4 py-3">
-        <div class="game-topbar">
-            <a class="brand-mark text-decoration-none" href="index.html">
-                <span class="brand-mark__icon"><i class="bi bi-bicycle"></i></span>
-                <span>
-                    <strong>Hill Cruze</strong>
-                    <small>Responsive endless ride</small>
-                </span>
-            </a>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-outline-light rounded-pill px-4" href="index.html">
-                    <i class="bi bi-house-door me-2"></i>Hub
+    <header class="game-header">
+        <div class="container-fluid px-3 px-lg-4 py-3">
+            <div class="game-topbar">
+                <a class="brand-mark text-decoration-none" href="index.html">
+                    <span class="brand-mark__icon"><i class="bi bi-bicycle"></i></span>
+                    <span>
+                        <strong>Hill Cruze</strong>
+                        <small>Live run shell</small>
+                    </span>
                 </a>
-                <button class="btn btn-sunrise rounded-pill px-4" id="pauseToggleBtn" type="button">
-                    <i class="bi bi-pause-circle me-2"></i>Pause
-                </button>
+
+                <div class="run-profile">
+                    <span class="run-profile__label">Current loadout</span>
+                    <div class="run-profile__chips">
+                        <span class="preview-chip" id="profileRider">Ember Rider</span>
+                        <span class="preview-chip" id="profileBike">Classic Frame</span>
+                        <span class="preview-chip" id="profileBadge">Trail Starter</span>
+                        <span class="preview-chip" id="profileBackground">Savanna Dawn</span>
+                    </div>
+                </div>
+
+                <div class="game-topbar__actions">
+                    <a class="btn btn-outline-light rounded-pill px-4" href="index.html">
+                        <i class="bi bi-house-door me-2"></i>Hub
+                    </a>
+                    <button class="btn btn-arcade rounded-pill px-4" id="pauseToggleBtn" type="button">
+                        <i class="bi bi-pause-circle me-2"></i>Pause
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
-    <main class="container-fluid px-3 px-lg-4 pb-4">
-        <section class="game-frame">
+    <main class="container-fluid px-3 px-lg-4 pb-4 game-main">
+        <section class="game-stage">
             <div id="phaser-root" class="phaser-root"></div>
 
-            <div class="hud-cluster hud-cluster--left">
-                <div class="hud-card">
+            <div class="hud-corner hud-corner--left">
+                <div class="hud-mini">
                     <span>Score</span>
                     <strong id="hudScore">0</strong>
                 </div>
-                <div class="hud-card">
+                <div class="hud-mini">
                     <span>Distance</span>
                     <strong id="hudDistance">0 m</strong>
                 </div>
-                <div class="hud-card">
+                <div class="hud-mini">
                     <span>Tokens</span>
                     <strong id="hudCoins">0</strong>
                 </div>
             </div>
 
-            <div class="hud-cluster hud-cluster--right">
-                <div class="hud-card">
+            <div class="hud-corner hud-corner--right">
+                <div class="hud-mini">
                     <span>Speed</span>
                     <strong id="hudSpeed">0 km/h</strong>
                 </div>
-                <div class="hud-card">
+                <div class="hud-mini">
                     <span>Biome</span>
                     <strong id="hudBiome">Savanna Dawn</strong>
                 </div>
-            </div>
-
-            <div class="hud-center">
-                <div class="hud-callout">
-                    <span class="hud-callout__safe">Collect gold and boosts</span>
-                    <span class="hud-callout__warn">Avoid red hazards</span>
+                <div class="hud-mini hud-mini--warning">
+                    <span>Incoming</span>
+                    <strong id="hudWarning">Clear track</strong>
                 </div>
             </div>
 
-            <div class="hud-status">
-                <div class="hud-card hud-card--wide">
-                    <div class="d-flex justify-content-between align-items-center gap-3">
-                        <span class="hud-label">Stamina</span>
-                        <strong id="hudStaminaLabel">100%</strong>
-                    </div>
-                    <div class="stamina-meter mt-2">
-                        <div class="stamina-meter__fill" id="hudStaminaFill"></div>
-                    </div>
+            <div class="hud-centerline">
+                <div class="hud-toast" id="hudToast" data-tone="info">
+                    <span class="hud-toast__eyebrow" id="hudRunState">Course Status</span>
+                    <strong id="hudStatusText">Loading course assets.</strong>
                 </div>
-                <div class="hud-card hud-card--wide">
-                    <span class="hud-label">Boosts</span>
-                    <div class="powerup-strip mt-2" id="hudPowerups">
-                        <span class="text-light-emphasis small">No active boosts</span>
+                <div class="hud-countdown" id="hudCountdown"></div>
+            </div>
+
+            <div class="hud-bottom">
+                <div class="hud-bottom__rail">
+                    <div class="hud-meter">
+                        <div class="hud-meter__label-row">
+                            <span>Stamina</span>
+                            <strong id="hudStaminaLabel">100%</strong>
+                        </div>
+                        <div class="stamina-meter">
+                            <div class="stamina-meter__fill" id="hudStaminaFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="hud-powerups">
+                        <span class="hud-powerups__label">Boosts</span>
+                        <div class="powerup-strip" id="hudPowerups">
+                            <span class="powerup-empty">No active boosts</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mobile-controls" id="mobileControls">
-                <button class="mobile-controls__btn" data-action="left" type="button"><i class="bi bi-arrow-left"></i></button>
-                <button class="mobile-controls__btn" data-action="jump" type="button"><i class="bi bi-arrow-up"></i></button>
-                <button class="mobile-controls__btn" data-action="boost" type="button"><i class="bi bi-lightning-charge-fill"></i></button>
-                <button class="mobile-controls__btn" data-action="duck" type="button"><i class="bi bi-arrow-down"></i></button>
-                <button class="mobile-controls__btn" data-action="right" type="button"><i class="bi bi-arrow-right"></i></button>
+            <div class="mobile-control-zone mobile-control-zone--left" id="mobileControls">
+                <button class="mobile-controls__btn" data-action="left" type="button" aria-label="Move left">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <button class="mobile-controls__btn" data-action="right" type="button" aria-label="Move right">
+                    <i class="bi bi-arrow-right"></i>
+                </button>
             </div>
-        </section>
 
-        <section class="game-dashboard row g-3 mt-3">
-            <div class="col-12 col-lg-4">
-                <section class="glass-panel h-100">
-                    <p class="eyebrow">Session Status</p>
-                    <h2 class="section-title">Current update</h2>
-                    <p class="status-pill mt-3 mb-0" id="gameStatus">
-                        Loading course assets.
-                    </p>
-                </section>
-            </div>
-            <div class="col-12 col-lg-4">
-                <section class="glass-panel h-100">
-                    <p class="eyebrow">Active Profile</p>
-                    <h2 class="section-title">Current cosmetic loadout</h2>
-                    <div class="vstack gap-2 mt-3">
-                        <div class="profile-line"><span>Rider</span><strong id="profileRider">Ember Rider</strong></div>
-                        <div class="profile-line"><span>Bike</span><strong id="profileBike">Classic Frame</strong></div>
-                        <div class="profile-line"><span>Badge</span><strong id="profileBadge">Trail Starter</strong></div>
-                        <div class="profile-line"><span>Hub Pack</span><strong id="profileBackground">Savanna Dawn</strong></div>
-                    </div>
-                </section>
-            </div>
-            <div class="col-12 col-lg-4">
-                <section class="glass-panel h-100">
-                    <p class="eyebrow">Run Guide</p>
-                    <h2 class="section-title">Read the course</h2>
-                    <ul class="reward-list mt-3">
-                        <li>Red-marked hazards end the run unless your shield is active.</li>
-                        <li>Gold token trails and bright pickups are always safe to collect.</li>
-                        <li>Jump low hazards, duck branches, and change lanes early.</li>
-                    </ul>
-                </section>
+            <div class="mobile-control-zone mobile-control-zone--right">
+                <button class="mobile-controls__btn" data-action="jump" type="button" aria-label="Jump">
+                    <i class="bi bi-arrow-up"></i>
+                </button>
+                <button class="mobile-controls__btn mobile-controls__btn--accent" data-action="boost" type="button" aria-label="Boost">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </button>
+                <button class="mobile-controls__btn" data-action="duck" type="button" aria-label="Duck">
+                    <i class="bi bi-arrow-down"></i>
+                </button>
             </div>
         </section>
     </main>
