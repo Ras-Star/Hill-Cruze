@@ -67,33 +67,33 @@
                 </div>
             </div>
 
-            <div class="hud-corner hud-corner--left">
-                <div class="hud-mini hc-hud-card hud-mini--score">
-                    <span>Score</span>
-                    <strong id="hudScore">0</strong>
-                </div>
-                <div class="hud-mini hc-hud-card hud-mini--distance">
-                    <span>Distance</span>
-                    <strong id="hudDistance">0 m</strong>
-                </div>
-                <div class="hud-mini hc-hud-card hud-mini--tokens">
-                    <span>Tokens</span>
-                    <strong id="hudCoins">0</strong>
+            <div class="hud-telemetry hud-telemetry--left">
+                <div class="hud-stack hud-stack--triple">
+                    <div class="hud-stack__item hud-stack__item--score">
+                        <span>Score</span>
+                        <strong id="hudScore">0</strong>
+                    </div>
+                    <div class="hud-stack__item hud-stack__item--distance">
+                        <span>Distance</span>
+                        <strong id="hudDistance">0 m</strong>
+                    </div>
+                    <div class="hud-stack__item hud-stack__item--tokens">
+                        <span>Tokens</span>
+                        <strong id="hudCoins">0</strong>
+                    </div>
                 </div>
             </div>
 
-            <div class="hud-corner hud-corner--right">
-                <div class="hud-mini hc-hud-card hud-mini--speed">
-                    <span>Speed</span>
-                    <strong id="hudSpeed">0 km/h</strong>
-                </div>
-                <div class="hud-mini hc-hud-card hud-mini--biome">
-                    <span>Biome</span>
-                    <strong id="hudBiome">Savanna Dawn</strong>
-                </div>
-                <div class="hud-mini hc-hud-card hud-mini--warning">
-                    <span>Incoming</span>
-                    <strong id="hudWarning">Clear track</strong>
+            <div class="hud-telemetry hud-telemetry--right">
+                <div class="hud-stack hud-stack--duo">
+                    <div class="hud-stack__item hud-stack__item--speed">
+                        <span>Speed</span>
+                        <strong id="hudSpeed">0 km/h</strong>
+                    </div>
+                    <div class="hud-stack__item hud-stack__item--phase">
+                        <span id="hudBiomeLabel">Biome</span>
+                        <strong id="hudBiome">Savanna Dawn</strong>
+                    </div>
                 </div>
             </div>
 
@@ -101,6 +101,7 @@
                 <div class="hud-toast" id="hudToast" data-tone="info">
                     <span class="hud-toast__eyebrow" id="hudRunState">Course Status</span>
                     <strong id="hudStatusText">Loading course assets.</strong>
+                    <div class="hud-livewarning" id="hudWarning" data-state="clear">Clear track</div>
                 </div>
                 <div class="hud-countdown" id="hudCountdown"></div>
             </div>

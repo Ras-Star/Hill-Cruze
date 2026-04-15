@@ -62,17 +62,17 @@ function updateHud(detail) {
     document.getElementById("hudCoins").textContent = formatInteger(detail.coins);
     document.getElementById("hudSpeed").textContent = `${formatInteger(detail.speed)} km/h`;
     document.getElementById("hudBiome").textContent = detail.phase || detail.biome;
-    document.getElementById("hudWarning").textContent = detail.warning || "Clear track";
+    document.getElementById("hudWarning").textContent = detail.warning || "Track clear";
     document.getElementById("hudStaminaLabel").textContent = `${Math.round(detail.stamina)}%`;
     document.getElementById("hudStaminaFill").style.width = `${detail.stamina}%`;
     document.getElementById("hudCountdown").textContent = detail.countdown || "";
-    const biomeCardLabel = document.querySelector(".hud-mini--biome span");
+    const biomeCardLabel = document.getElementById("hudBiomeLabel");
     if (biomeCardLabel) {
-        biomeCardLabel.textContent = detail.biome || "Track";
+        biomeCardLabel.textContent = detail.phase ? detail.biome : "Biome";
     }
-    const warningCard = document.querySelector(".hud-mini--warning");
+    const warningCard = document.getElementById("hudWarning");
     if (warningCard) {
-        const warningText = detail.warning || "";
+        const warningText = detail.warning || "Track clear";
         const isDanger = /jump|duck|hot|find the lane|hold the gap|thread|pressure|brace/i.test(warningText);
         warningCard.dataset.state = isDanger ? "danger" : "clear";
         const gameStage = document.querySelector(".game-stage");
