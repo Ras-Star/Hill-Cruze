@@ -61,26 +61,34 @@ function updateHud(detail) {
     document.getElementById("hudDistance").textContent = `${formatInteger(detail.distance)} m`;
     document.getElementById("hudCoins").textContent = formatInteger(detail.coins);
     document.getElementById("hudSpeed").textContent = `${formatInteger(detail.speed)} km/h`;
-    document.getElementById("hudBiome").textContent = detail.biome;
+    document.getElementById("hudBiome").textContent = detail.phase || detail.biome;
     document.getElementById("hudWarning").textContent = detail.warning || "Clear track";
     document.getElementById("hudStaminaLabel").textContent = `${Math.round(detail.stamina)}%`;
     document.getElementById("hudStaminaFill").style.width = `${detail.stamina}%`;
     document.getElementById("hudCountdown").textContent = detail.countdown || "";
+    const biomeCardLabel = document.querySelector(".hud-mini--biome span");
+    if (biomeCardLabel) {
+        biomeCardLabel.textContent = detail.biome || "Track";
+    }
     const warningCard = document.querySelector(".hud-mini--warning");
     if (warningCard) {
         const warningText = detail.warning || "";
-        const isDanger = /jump|duck|hot|find the lane|hold the gap/i.test(warningText);
+        const isDanger = /jump|duck|hot|find the lane|hold the gap|thread|pressure|brace/i.test(warningText);
         warningCard.dataset.state = isDanger ? "danger" : "clear";
+        const gameStage = document.querySelector(".game-stage");
+        if (gameStage) {
+            gameStage.dataset.danger = isDanger ? "hot" : "clear";
+        }
     }
 
     const container = document.getElementById("hudPowerups");
     container.innerHTML = "";
     if (!detail.powerups.length) {
-        container.innerHTML = `<span class="powerup-empty">No active boosts</span>`;
+        container.innerHTML = `<span class="hc-chip hc-chip--empty">No active boosts</span>`;
     } else {
         detail.powerups.forEach((powerup) => {
             const pill = document.createElement("span");
-            pill.className = "powerup-pill";
+            pill.className = "hc-chip hc-chip--powerup";
             pill.textContent = powerup;
             container.appendChild(pill);
         });

@@ -16,24 +16,24 @@
 
     <header class="site-header container py-4 py-lg-5">
         <div class="stage-topbar">
-            <a class="brand-mark text-decoration-none" href="index.html">
-                <span class="brand-mark__icon"><i class="bi bi-bicycle"></i></span>
-                <span>
-                    <strong>Hill Cruze</strong>
-                    <small>Hybrid arcade downhill staging</small>
-                </span>
-            </a>
-            <div class="stage-topbar__actions">
-                <a class="topbar-chip text-decoration-none" href="#ride-loadout">Tune Loadout</a>
-                <a class="btn btn-arcade rounded-pill px-4" href="game.html">
-                    <i class="bi bi-lightning-charge-fill me-2"></i>Start Ride
+                <a class="brand-mark text-decoration-none" href="index.html">
+                    <span class="brand-mark__icon"><i class="bi bi-bicycle"></i></span>
+                    <span>
+                        <strong>Hill Cruze</strong>
+                        <small>Hybrid arcade downhill staging</small>
+                    </span>
                 </a>
+                <div class="stage-topbar__actions">
+                    <a class="hc-chip hc-chip--muted text-decoration-none" href="#ride-loadout">Tune Loadout</a>
+                    <a class="hc-button hc-button--primary" href="game.html">
+                        <i class="bi bi-lightning-charge-fill me-2"></i>Start Ride
+                    </a>
+                </div>
             </div>
-        </div>
-    </header>
+        </header>
 
     <main class="container pb-5">
-        <section class="stage-hero">
+        <section class="stage-hero hc-panel hc-panel--hero">
             <div class="stage-hero__copy">
                 <p class="eyebrow">Hybrid Arcade Endless Rider</p>
                 <h1>Ride hard. Read the line. Own the biome.</h1>
@@ -42,23 +42,23 @@
                     bold biome mood, and a faster route from your loadout to the live track.
                 </p>
                 <div class="hero-actions">
-                    <a class="btn btn-arcade btn-lg rounded-pill px-4" href="game.html">
+                    <a class="hc-button hc-button--primary hc-button--lg" href="game.html">
                         <i class="bi bi-play-circle-fill me-2"></i>Launch Run
                     </a>
-                    <a class="btn btn-outline-light btn-lg rounded-pill px-4" href="#run-guide">
+                    <a class="hc-button hc-button--ghost hc-button--lg" href="#run-guide">
                         <i class="bi bi-signpost-split me-2"></i>Read The Line
                     </a>
                 </div>
                 <div class="stat-strip">
-                    <article class="metric-card">
+                    <article class="metric-card hc-stat">
                         <span>Best Score</span>
                         <strong id="bestScore">0</strong>
                     </article>
-                    <article class="metric-card">
+                    <article class="metric-card hc-stat">
                         <span>Longest Distance</span>
                         <strong id="longestDistance">0 m</strong>
                     </article>
-                    <article class="metric-card">
+                    <article class="metric-card hc-stat">
                         <span>Total Tokens</span>
                         <strong id="totalCoins">0</strong>
                     </article>
@@ -79,9 +79,9 @@
                         </p>
                     </div>
                     <div class="hero-preview__chips">
-                        <span class="preview-chip" id="selectedRider">Ember Rider</span>
-                        <span class="preview-chip" id="selectedBike">Classic Frame</span>
-                        <span class="preview-chip" id="nextUnlock">Next reward: River Rider</span>
+                        <span class="hc-chip hc-chip--preview" id="selectedRider">Ember Rider</span>
+                        <span class="hc-chip hc-chip--preview" id="selectedBike">Classic Frame</span>
+                        <span class="hc-chip hc-chip--preview" id="nextUnlock">Next reward: River Rider</span>
                     </div>
                 </div>
                 <div class="hero-preview__footer">
@@ -97,7 +97,7 @@
         </section>
 
         <section class="stage-grid mt-4" id="ride-loadout">
-            <div class="stage-card">
+            <div class="stage-card hc-panel">
                 <div class="section-heading">
                     <div>
                         <p class="eyebrow">Loadout Garage</p>
@@ -152,18 +152,18 @@
             </div>
 
             <div class="stage-sidebar">
-                <section class="stage-card stage-card--compact" id="progressionRail">
+                <section class="stage-card stage-card--compact hc-panel" id="progressionRail">
                     <div class="section-heading section-heading--stack">
                         <div>
                             <p class="eyebrow">Progression Rail</p>
                             <h2 class="section-title">What the next runs unlock</h2>
                         </div>
                         <div class="progress-focus">
-                            <div class="progress-focus__item">
+                            <div class="progress-focus__item hc-stat">
                                 <span>Stored Tokens</span>
                                 <strong id="totalCoinsFocus">0</strong>
                             </div>
-                            <div class="progress-focus__item">
+                            <div class="progress-focus__item hc-stat">
                                 <span>Current Pack</span>
                                 <strong id="selectedBackgroundSummary">Savanna Dawn</strong>
                             </div>
@@ -172,7 +172,7 @@
                     <div class="unlock-rail mt-4" id="unlockRoadmap"></div>
                 </section>
 
-                <section class="stage-card stage-card--compact" id="run-guide">
+                <section class="stage-card stage-card--compact hc-panel" id="run-guide">
                     <div class="section-heading section-heading--stack">
                         <div>
                             <p class="eyebrow">Run Guide</p>
@@ -200,13 +200,13 @@
             </div>
         </section>
 
-        <section class="stage-card stage-card--footer mt-4">
+        <section class="stage-card stage-card--footer hc-panel mt-4">
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">Ride Flow</p>
                     <h2 class="section-title">From staging to finish</h2>
                 </div>
-                <a class="btn btn-outline-light rounded-pill px-4" href="game.html">
+                <a class="hc-button hc-button--ghost" href="game.html">
                     <i class="bi bi-trophy me-2"></i>Race For More Tokens
                 </a>
             </div>

@@ -29,18 +29,18 @@
                     <span class="run-profile__label">Current loadout</span>
                     <strong class="run-profile__summary" id="profileSummary">Ember Rider / Classic Frame / Trail Starter / Savanna Dawn</strong>
                     <div class="run-profile__chips">
-                        <span class="preview-chip" id="profileRider">Ember Rider</span>
-                        <span class="preview-chip" id="profileBike">Classic Frame</span>
-                        <span class="preview-chip" id="profileBadge">Trail Starter</span>
-                        <span class="preview-chip" id="profileBackground">Savanna Dawn</span>
+                        <span class="hc-chip hc-chip--preview" id="profileRider">Ember Rider</span>
+                        <span class="hc-chip hc-chip--preview" id="profileBike">Classic Frame</span>
+                        <span class="hc-chip hc-chip--preview" id="profileBadge">Trail Starter</span>
+                        <span class="hc-chip hc-chip--preview" id="profileBackground">Savanna Dawn</span>
                     </div>
                 </div>
 
                 <div class="game-topbar__actions">
-                    <a class="btn btn-outline-light rounded-pill px-4" href="index.html">
+                    <a class="hc-button hc-button--ghost hc-button--compact" href="index.html">
                         <i class="bi bi-house-door me-2"></i>Hub
                     </a>
-                    <button class="btn btn-arcade rounded-pill px-4" id="pauseToggleBtn" type="button">
+                    <button class="hc-button hc-button--primary hc-button--compact" id="pauseToggleBtn" type="button">
                         <i class="bi bi-pause-circle me-2"></i>Pause
                     </button>
                 </div>
@@ -49,10 +49,10 @@
     </header>
 
     <main class="container-fluid px-3 px-lg-4 pb-4 game-main">
-        <section class="game-stage">
+        <section class="game-stage hc-panel hc-panel--game">
             <div id="phaser-root" class="phaser-root"></div>
 
-            <div class="game-loader" id="gameLoader" data-state="loading" aria-live="polite">
+            <div class="game-loader hc-loader" id="gameLoader" data-state="loading" aria-live="polite">
                 <div class="game-loader__panel">
                     <span class="game-loader__eyebrow" id="gameLoaderEyebrow">Booting</span>
                     <strong class="game-loader__title" id="gameLoaderTitle">Preparing Hill Cruze</strong>
@@ -61,37 +61,37 @@
                         <div class="game-loader__progress-fill" id="gameLoaderFill"></div>
                     </div>
                     <span class="game-loader__percent" id="gameLoaderPercent">0%</span>
-                    <button class="btn btn-arcade rounded-pill px-4 game-loader__retry" id="gameLoaderRetry" type="button">
+                    <button class="hc-button hc-button--primary hc-button--compact game-loader__retry" id="gameLoaderRetry" type="button">
                         <i class="bi bi-arrow-clockwise me-2"></i>Retry Load
                     </button>
                 </div>
             </div>
 
             <div class="hud-corner hud-corner--left">
-                <div class="hud-mini hud-mini--score">
+                <div class="hud-mini hc-hud-card hud-mini--score">
                     <span>Score</span>
                     <strong id="hudScore">0</strong>
                 </div>
-                <div class="hud-mini hud-mini--distance">
+                <div class="hud-mini hc-hud-card hud-mini--distance">
                     <span>Distance</span>
                     <strong id="hudDistance">0 m</strong>
                 </div>
-                <div class="hud-mini hud-mini--tokens">
+                <div class="hud-mini hc-hud-card hud-mini--tokens">
                     <span>Tokens</span>
                     <strong id="hudCoins">0</strong>
                 </div>
             </div>
 
             <div class="hud-corner hud-corner--right">
-                <div class="hud-mini hud-mini--speed">
+                <div class="hud-mini hc-hud-card hud-mini--speed">
                     <span>Speed</span>
                     <strong id="hudSpeed">0 km/h</strong>
                 </div>
-                <div class="hud-mini hud-mini--biome">
+                <div class="hud-mini hc-hud-card hud-mini--biome">
                     <span>Biome</span>
                     <strong id="hudBiome">Savanna Dawn</strong>
                 </div>
-                <div class="hud-mini hud-mini--warning">
+                <div class="hud-mini hc-hud-card hud-mini--warning">
                     <span>Incoming</span>
                     <strong id="hudWarning">Clear track</strong>
                 </div>
@@ -120,7 +120,7 @@
                     <div class="hud-powerups">
                         <span class="hud-powerups__label">Boosts</span>
                         <div class="powerup-strip" id="hudPowerups">
-                            <span class="powerup-empty">No active boosts</span>
+                            <span class="hc-chip hc-chip--empty">No active boosts</span>
                         </div>
                     </div>
                 </div>
@@ -129,10 +129,10 @@
             <div class="mobile-control-zone mobile-control-zone--left" id="mobileControls">
                 <span class="mobile-control-zone__label">Steer</span>
                 <div class="mobile-control-zone__cluster">
-                    <button class="mobile-controls__btn" data-action="left" type="button" aria-label="Move left">
+                    <button class="mobile-controls__btn hc-control" data-action="left" type="button" aria-label="Move left">
                         <i class="bi bi-arrow-left"></i>
                     </button>
-                    <button class="mobile-controls__btn" data-action="right" type="button" aria-label="Move right">
+                    <button class="mobile-controls__btn hc-control" data-action="right" type="button" aria-label="Move right">
                         <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
@@ -141,13 +141,13 @@
             <div class="mobile-control-zone mobile-control-zone--right">
                 <span class="mobile-control-zone__label">Actions</span>
                 <div class="mobile-control-zone__cluster mobile-control-zone__cluster--actions">
-                    <button class="mobile-controls__btn" data-action="jump" type="button" aria-label="Jump">
+                    <button class="mobile-controls__btn hc-control" data-action="jump" type="button" aria-label="Jump">
                         <i class="bi bi-arrow-up"></i>
                     </button>
-                    <button class="mobile-controls__btn mobile-controls__btn--accent" data-action="boost" type="button" aria-label="Boost">
+                    <button class="mobile-controls__btn mobile-controls__btn--accent hc-control" data-action="boost" type="button" aria-label="Boost">
                         <i class="bi bi-lightning-charge-fill"></i>
                     </button>
-                    <button class="mobile-controls__btn" data-action="duck" type="button" aria-label="Duck">
+                    <button class="mobile-controls__btn hc-control" data-action="duck" type="button" aria-label="Duck">
                         <i class="bi bi-arrow-down"></i>
                     </button>
                 </div>

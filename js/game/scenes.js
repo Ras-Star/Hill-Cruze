@@ -41,6 +41,13 @@ const POWERUPS = {
 };
 
 const LANE_LABELS = ["Left", "Center", "Right"];
+const SURVIVAL_PHASES = [
+    { label: "Opening Line", message: "Opening Line. Keep the center and read the first call.", tone: "info" },
+    { label: "Dust Chase", message: "Dust Chase. The rhythm tightens and gaps close faster.", tone: "info" },
+    { label: "Pressure Gate", message: "Pressure Gate. Safe lanes open later and punish hesitation.", tone: "warn" },
+    { label: "Redline", message: "Redline. Commit early and stay sharp through the squeeze.", tone: "warn" },
+    { label: "Final Thread", message: "Final Thread. Every lane call matters now.", tone: "warn" }
+];
 const PLAYER = {
     originY: 0.88,
     width: 244,
@@ -391,6 +398,7 @@ export class MenuScene extends Phaser.Scene {
             speed: 0,
             stamina: 100,
             biome: biome.label,
+            phase: "Staging",
             warning: "Clear track",
             countdown: "",
             powerups: []
@@ -407,7 +415,7 @@ export class MenuScene extends Phaser.Scene {
             color: "#fff7df",
             letterSpacing: 8
         }).setOrigin(0.5);
-        const subtitle = this.add.text(WORLD.width / 2, 256, "Hardcore downhill lines with truthful lanes and biome shifts", {
+        const subtitle = this.add.text(WORLD.width / 2, 256, "Pure survival downhill lines with truthful lanes and biome pressure", {
             fontFamily: "Sora",
             fontSize: "28px",
             color: "#dce7f6"
@@ -432,7 +440,7 @@ export class MenuScene extends Phaser.Scene {
         ).setOrigin(0.5);
 
         const controls = this.add.text(WORLD.width / 2, 720,
-            "Left / Right steers lanes. Jump low hazards. Duck branches. Hold Shift or tap boost to burn speed.",
+            "Left / Right commits the lane. Jump low hazards. Duck branches. Hold Shift or tap boost only when the line is clear.",
             {
                 fontFamily: "Sora",
                 fontSize: "21px",
@@ -525,6 +533,7 @@ export class RunScene extends Phaser.Scene {
         this.segmentIndex = 0;
         this.currentBiomeIndex = Math.max(0, BIOMES.findIndex((biome) => biome.id === this.startBiomeId));
         this.powerTimers = { shield: 0, rush: 0, energy: 0 };
+        this.survivalTier = 0;
         this.elapsedRunTime = 0;
         this.spawnClock = { pattern: 920, powerup: 6200 };
         this.hudClock = 0;
@@ -535,6 +544,7 @@ export class RunScene extends Phaser.Scene {
         this.warmupTrailSpawned = false;
         this.entities = [];
         this.threatLevels = [0, 0, 0];
+        this.lastPatternKey = null;
 
         this.backgrounds = BIOMES.map((biome, index) => this.add.image(WORLD.width / 2, WORLD.height / 2, biome.id)
             .setDisplaySize(WORLD.width, WORLD.height)
@@ -577,6 +587,7 @@ export class RunScene extends Phaser.Scene {
 
         this.elapsedRunTime += dt;
         this.floatTime += dt;
+        const wasGrounded = this.isGrounded;
 
         if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
             emit("toggle-pause", {});
@@ -621,6 +632,18 @@ export class RunScene extends Phaser.Scene {
             this.playerVelocityY = 0;
             this.isGrounded = true;
         }
+        if (!wasGrounded && this.isGrounded) {
+            this.spawnDustBurst(this.playerX, this.track.playerGroundY + 18, {
+                tint: BIOMES[this.currentBiomeIndex].laneTint,
+                count: 8,
+                spreadX: 70,
+                lift: 38,
+                minScale: 1.8,
+                maxScale: 3.5,
+                alpha: 0.38
+            });
+            this.spawnImpactRing(this.playerX, this.track.playerGroundY + 20, BIOMES[this.currentBiomeIndex].accent);
+        }
 
         const rushBonus = this.powerTimers.rush > 0 ? 1.14 : 1;
         const boostBonus = liveRun && boostHeld && this.stamina > 0 ? RUN_CONFIG.boostMultiplier : 1;
@@ -634,6 +657,8 @@ export class RunScene extends Phaser.Scene {
             this.distance += this.currentSpeed * dt * 0.09;
             this.score += this.currentSpeed * dt * 0.52;
         }
+
+        this.updateSurvivalTier();
 
         Object.keys(this.powerTimers).forEach((key) => {
             this.powerTimers[key] = Math.max(0, this.powerTimers[key] - dt);
@@ -674,7 +699,26 @@ export class RunScene extends Phaser.Scene {
     }
 
     changeLane(direction) {
-        this.targetLane = Phaser.Math.Clamp(this.targetLane + direction, 0, 2);
+        const nextLane = Phaser.Math.Clamp(this.targetLane + direction, 0, 2);
+        if (nextLane === this.targetLane) return;
+
+        this.targetLane = nextLane;
+        this.spawnDustBurst(this.playerX, this.track.playerGroundY + 18, {
+            tint: BIOMES[this.currentBiomeIndex].laneTint,
+            count: 6,
+            spreadX: 58,
+            lift: 28,
+            minScale: 1.4,
+            maxScale: 2.8,
+            alpha: 0.28
+        });
+        this.spawnLaneSignal(nextLane, biomeColor(BIOMES[this.currentBiomeIndex]), {
+            width: 132,
+            height: 30,
+            alpha: 0.14,
+            lifespan: 240,
+            y: this.track.playerGroundY + 8
+        });
     }
 
     getClosestLane(x) {
@@ -701,6 +745,123 @@ export class RunScene extends Phaser.Scene {
 
     getPerspectiveScale(progress, minScale = 0.24, maxScale = 1.02) {
         return Phaser.Math.Linear(minScale, maxScale, Phaser.Math.Clamp(progress, 0, 1));
+    }
+
+    getSurvivalTierByDistance(distance = this.distance) {
+        return Math.min(SURVIVAL_PHASES.length - 1, Math.floor(distance / 520));
+    }
+
+    getSurvivalPhaseLabel() {
+        return SURVIVAL_PHASES[this.survivalTier].label;
+    }
+
+    updateSurvivalTier() {
+        const nextTier = this.getSurvivalTierByDistance();
+        if (nextTier === this.survivalTier) return;
+
+        this.survivalTier = nextTier;
+        const phase = SURVIVAL_PHASES[this.survivalTier];
+        emit("status", {
+            label: `Phase ${this.survivalTier + 1}`,
+            message: phase.message,
+            tone: phase.tone
+        });
+        this.pulseStage(biomeColor(BIOMES[this.currentBiomeIndex]), 0.08 + (this.survivalTier * 0.01));
+        this.spawnLaneSignal(1, biomeColor(BIOMES[this.currentBiomeIndex]), {
+            width: 240,
+            height: 42,
+            alpha: 0.16,
+            lifespan: 420
+        });
+    }
+
+    pulseStage(color, alpha = 0.08) {
+        const pulse = this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, color, alpha).setDepth(2.9);
+        this.tweens.add({
+            targets: pulse,
+            alpha: 0,
+            duration: 320,
+            ease: "Quad.Out",
+            onComplete: () => pulse.destroy()
+        });
+    }
+
+    spawnDustBurst(x, y, options = {}) {
+        const {
+            tint = 0xf5cf72,
+            count = 6,
+            spreadX = 56,
+            lift = 26,
+            minScale = 1.4,
+            maxScale = 3,
+            alpha = 0.32,
+            depth = 5.1
+        } = options;
+
+        for (let index = 0; index < count; index += 1) {
+            const dust = this.add.image(
+                x + Phaser.Math.FloatBetween(-spreadX * 0.32, spreadX * 0.32),
+                y + Phaser.Math.FloatBetween(-10, 10),
+                "dust-dot"
+            ).setTint(tint).setAlpha(alpha).setScale(Phaser.Math.FloatBetween(1, 1.6)).setDepth(depth);
+
+            this.tweens.add({
+                targets: dust,
+                x: x + Phaser.Math.FloatBetween(-spreadX, spreadX),
+                y: y - Phaser.Math.FloatBetween(12, lift),
+                alpha: 0,
+                scale: Phaser.Math.FloatBetween(minScale, maxScale),
+                duration: Phaser.Math.Between(220, 420),
+                ease: "Quad.Out",
+                onComplete: () => dust.destroy()
+            });
+        }
+    }
+
+    spawnImpactRing(x, y, color, options = {}) {
+        const { width = 42, height = 18, alpha = 0.24, depth = 5.2 } = options;
+        const resolvedColor = typeof color === "string" ? Phaser.Display.Color.HexStringToColor(color).color : color;
+        const ring = this.add.ellipse(x, y, width, height, resolvedColor, alpha).setDepth(depth);
+        this.tweens.add({
+            targets: ring,
+            alpha: 0,
+            scaleX: 2.6,
+            scaleY: 2.2,
+            duration: 240,
+            ease: "Quad.Out",
+            onComplete: () => ring.destroy()
+        });
+    }
+
+    spawnLaneSignal(lane, color, options = {}) {
+        const {
+            width = 124,
+            height = 24,
+            alpha = 0.18,
+            lifespan = 300,
+            y = this.track.horizonY + 34
+        } = options;
+        const x = this.track.laneTopX[lane];
+        const signal = this.add.ellipse(x, y, width, height, color, alpha).setDepth(5.05);
+        const stripe = this.add.rectangle(x, y - 2, width * 0.62, 4, 0xffffff, alpha + 0.16).setDepth(5.08);
+
+        this.tweens.add({
+            targets: signal,
+            alpha: 0,
+            scaleX: 1.7,
+            scaleY: 2.2,
+            duration: lifespan,
+            ease: "Quad.Out",
+            onComplete: () => signal.destroy()
+        });
+        this.tweens.add({
+            targets: stripe,
+            alpha: 0,
+            scaleX: 1.32,
+            duration: lifespan,
+            ease: "Quad.Out",
+            onComplete: () => stripe.destroy()
+        });
     }
 
     drawTrack() {
@@ -823,14 +984,28 @@ export class RunScene extends Phaser.Scene {
                 fx.fillStyle(color, active ? Phaser.Math.Linear(0.12, 0.3, progress) : Phaser.Math.Linear(0.06, 0.16, progress));
                 fx.fillEllipse(point.x, point.y + (size * 0.08), size * 0.62, size * 0.18);
             }
+
+            if (threat > 0.28) {
+                const signalPoint = this.getPerspectivePoint(lane, 0.16);
+                const gateWidth = Phaser.Math.Linear(44, 88, threat);
+                fx.lineStyle(Phaser.Math.Linear(2.5, 4.5, threat), color, Phaser.Math.Linear(0.28, 0.52, threat));
+                fx.beginPath();
+                fx.moveTo(signalPoint.x - gateWidth, signalPoint.y - 14);
+                fx.lineTo(signalPoint.x, signalPoint.y - 2);
+                fx.lineTo(signalPoint.x + gateWidth, signalPoint.y - 14);
+                fx.strokePath();
+                fx.fillStyle(color, Phaser.Math.Linear(0.12, 0.22, threat));
+                fx.fillCircle(signalPoint.x, signalPoint.y - 12, Phaser.Math.Linear(8, 14, threat));
+            }
         });
 
         fx.fillStyle(accent, 0.16);
         fx.fillEllipse(WORLD.width / 2, this.track.horizonY + 12, 480, 58);
 
         const activeLanePoint = this.getPerspectivePoint(this.targetLane, 0.9);
-        fx.fillStyle(0xffffff, 0.14);
-        fx.fillEllipse(activeLanePoint.x, activeLanePoint.y + 8, 168, 34);
+        const lanePulse = 168 + Math.sin(this.time.now * 0.01) * 18 + (this.currentSpeed * 0.02);
+        fx.fillStyle(0xffffff, 0.14 + (this.currentSpeed / 4600));
+        fx.fillEllipse(activeLanePoint.x, activeLanePoint.y + 8, lanePulse, 34);
 
         const bottomLanePoint = this.getPerspectivePoint(this.targetLane, 1);
         const chevronWidth = 42;
@@ -851,20 +1026,25 @@ export class RunScene extends Phaser.Scene {
         const bob = this.isGrounded ? Math.sin(this.floatTime * 10) * 3 : 0;
         const groundY = this.track.playerGroundY;
         const rider = getCatalogItem("riders", this.profile.selectedRider);
+        const speedLift = Phaser.Math.Clamp(this.currentSpeed / 1200, 0, 0.16);
 
         this.player.x = this.playerX;
         this.player.y = groundY + this.playerYOffset + bob;
         this.player.setDisplaySize(PLAYER.width, this.ducking ? PLAYER.duckHeight : PLAYER.height);
-        this.player.setRotation(lean + (this.isGrounded ? Math.sin(this.floatTime * 7) * 0.018 : -0.06));
+        this.player.setRotation(lean + speedLift + (this.isGrounded ? Math.sin(this.floatTime * 7) * 0.018 : -0.06));
 
         this.playerShadow.x = this.playerX;
         this.playerShadow.y = groundY + 18;
-        this.playerShadow.setScale(this.isGrounded ? 1 : Math.max(0.55, 1 - (Math.abs(this.playerYOffset) / 280)));
+        this.playerShadow.setScale(
+            this.isGrounded
+                ? 1 + Phaser.Math.Clamp(this.currentSpeed / 1800, 0, 0.12)
+                : Math.max(0.55, 1 - (Math.abs(this.playerYOffset) / 280))
+        );
 
         this.playerAura.x = this.playerX;
         this.playerAura.y = this.player.y - 108;
         this.playerAura.setFillStyle(rider.accent, 0.1 + (this.powerTimers.rush > 0 ? 0.06 : 0));
-        this.playerAura.setScale(0.96 + Math.sin(this.time.now * 0.004) * 0.05);
+        this.playerAura.setScale(0.96 + Math.sin(this.time.now * 0.004) * 0.05 + Phaser.Math.Clamp(this.currentSpeed / 2600, 0, 0.06));
     }
 
     updateBiomeCycle() {
@@ -885,6 +1065,17 @@ export class RunScene extends Phaser.Scene {
             this.ridgeLayer.setTint(BIOMES[this.currentBiomeIndex].ridgeTint);
             this.canopyLayer.setTint(BIOMES[this.currentBiomeIndex].canopyTint);
             this.trackSheen.setTint(BIOMES[this.currentBiomeIndex].laneTint);
+            this.pulseStage(biomeColor(BIOMES[this.currentBiomeIndex]), 0.1);
+            this.spawnDustBurst(WORLD.width / 2, this.track.horizonY + 42, {
+                tint: BIOMES[this.currentBiomeIndex].laneTint,
+                count: 16,
+                spreadX: 260,
+                lift: 84,
+                minScale: 2.2,
+                maxScale: 4.2,
+                alpha: 0.26,
+                depth: 3.4
+            });
         }
 
         emit("status", {
@@ -903,29 +1094,53 @@ export class RunScene extends Phaser.Scene {
 
         if (this.spawnClock.pattern <= 0) {
             this.spawnPattern();
-            const nextInterval = rangeValue(RUN_CONFIG.patternInterval) - Math.min(320, this.distance * 0.12);
-            this.spawnClock.pattern = Math.max(520, nextInterval);
+            const tierPressure = this.survivalTier * 74;
+            const nextInterval = rangeValue(RUN_CONFIG.patternInterval) - Math.min(460, (this.distance * 0.12) + tierPressure);
+            this.spawnClock.pattern = Math.max(430, nextInterval);
         }
 
         if (this.spawnClock.powerup <= 0) {
             this.spawnPowerupDrop();
-            this.spawnClock.powerup = rangeValue(RUN_CONFIG.powerupInterval);
+            const powerupDelay = rangeValue(RUN_CONFIG.powerupInterval) - Math.min(1200, this.survivalTier * 220);
+            this.spawnClock.powerup = Math.max(3600, powerupDelay);
         }
     }
 
     spawnPattern() {
         const patterns = [
-            () => this.patternCoinLane(),
-            () => this.patternSingleLow(),
-            () => this.patternSingleHigh()
+            { key: "coin-lane", fn: () => this.patternCoinLane() },
+            { key: "single-low", fn: () => this.patternSingleLow() },
+            { key: "single-high", fn: () => this.patternSingleHigh() }
         ];
 
-        if (this.distance > 260) patterns.push(() => this.patternZigZagCoins());
-        if (this.distance > 540) patterns.push(() => this.patternDualThreat());
-        if (this.distance > 900) patterns.push(() => this.patternStaggered());
-        if (this.distance > 1320) patterns.push(() => this.patternComboBox());
+        if (this.survivalTier >= 1) {
+            patterns.push(
+                { key: "zig-zag", fn: () => this.patternZigZagCoins() },
+                { key: "double-tap", fn: () => this.patternDoubleTap() },
+                { key: "center-corridor", fn: () => this.patternCenterCorridor() }
+            );
+        }
+        if (this.survivalTier >= 2) {
+            patterns.push(
+                { key: "dual-threat", fn: () => this.patternDualThreat() },
+                { key: "lane-sweep", fn: () => this.patternLaneSweep() }
+            );
+        }
+        if (this.survivalTier >= 3) {
+            patterns.push(
+                { key: "staggered", fn: () => this.patternStaggered() },
+                { key: "combo-box", fn: () => this.patternComboBox() },
+                { key: "power-pocket", fn: () => this.patternPowerPocket() }
+            );
+        }
+        if (this.survivalTier >= 4) {
+            patterns.push({ key: "pressure-pair", fn: () => this.patternPressurePair() });
+        }
 
-        Phaser.Utils.Array.GetRandom(patterns)();
+        const candidates = patterns.filter((pattern) => pattern.key !== this.lastPatternKey);
+        const choice = Phaser.Utils.Array.GetRandom(candidates.length ? candidates : patterns);
+        this.lastPatternKey = choice.key;
+        choice.fn();
     }
 
     patternCoinLane() {
@@ -1001,6 +1216,50 @@ export class RunScene extends Phaser.Scene {
         this.spawnCoinLine(safeLane, 6, { progressStart: -0.02, spacing: 0.065, lift: 174 });
     }
 
+    patternDoubleTap() {
+        const lane = Phaser.Math.Between(0, 2);
+        const safeLane = Phaser.Utils.Array.GetRandom([0, 1, 2].filter((candidate) => candidate !== lane));
+
+        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), lane, { progress: 0.06 });
+        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), lane, { progress: -0.18 });
+        this.spawnCoinLine(safeLane, 5, { progressStart: -0.03, spacing: 0.065, lift: 172 });
+    }
+
+    patternCenterCorridor() {
+        this.spawnObstacle("branch", 0, { progress: 0.03 });
+        this.spawnObstacle("branch", 2, { progress: -0.06 });
+        this.spawnCoinLine(1, 6, { progressStart: -0.02, spacing: 0.062, lift: 168 });
+    }
+
+    patternLaneSweep() {
+        const firstLane = Phaser.Math.Between(0, 2);
+        const secondLane = firstLane === 0 ? 1 : (firstLane === 2 ? 1 : Phaser.Utils.Array.GetRandom([0, 2]));
+        const safeLane = [0, 1, 2].find((lane) => lane !== firstLane && lane !== secondLane);
+
+        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), firstLane, { progress: 0.02 });
+        this.spawnObstacle("branch", secondLane, { progress: -0.14 });
+        this.spawnCoinLine(safeLane, 5, { progressStart: -0.04, spacing: 0.068, lift: 174 });
+    }
+
+    patternPowerPocket() {
+        const safeLane = Phaser.Math.Between(0, 2);
+        const blocked = [0, 1, 2].filter((lane) => lane !== safeLane);
+
+        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), blocked[0], { progress: 0.04 });
+        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["branch", "rock"]), blocked[1], { progress: -0.1 });
+        this.spawnPowerup(Phaser.Utils.Array.GetRandom(Object.keys(POWERUPS)), safeLane, { progress: -0.18, lift: 214 });
+    }
+
+    patternPressurePair() {
+        const safeLane = Phaser.Utils.Array.GetRandom([0, 2]);
+        const branchLane = safeLane === 0 ? 2 : 0;
+
+        this.spawnObstacle("branch", branchLane, { progress: 0.04 });
+        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), 1, { progress: -0.08 });
+        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), branchLane, { progress: -0.22 });
+        this.spawnCoinLine(safeLane, 6, { progressStart: -0.05, spacing: 0.06, lift: 176 });
+    }
+
     spawnPowerupDrop() {
         const lane = Phaser.Math.Between(0, 2);
         const type = Phaser.Utils.Array.GetRandom(Object.keys(POWERUPS));
@@ -1034,6 +1293,13 @@ export class RunScene extends Phaser.Scene {
             glow,
             shadow,
             warning
+        });
+
+        this.spawnLaneSignal(lane, type === "branch" ? 0x7dc8ff : 0xff7d1c, {
+            width: 152,
+            height: 28,
+            alpha: 0.16,
+            lifespan: 340
         });
     }
 
@@ -1084,6 +1350,13 @@ export class RunScene extends Phaser.Scene {
             glow,
             shadow
         });
+
+        this.spawnLaneSignal(lane, POWERUPS[type].accent, {
+            width: 120,
+            height: 24,
+            alpha: 0.12,
+            lifespan: 280
+        });
     }
 
     updateEntities(dt) {
@@ -1121,6 +1394,16 @@ export class RunScene extends Phaser.Scene {
                 if (entity.lane === this.playerCollisionLane && Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity, 0.56))) {
                     this.coins += 1;
                     this.score += 14;
+                    this.spawnDustBurst(entity.sprite.x, entity.sprite.y + 10, {
+                        tint: 0xffd866,
+                        count: 4,
+                        spreadX: 28,
+                        lift: 34,
+                        minScale: 1.2,
+                        maxScale: 2.2,
+                        alpha: 0.28,
+                        depth: 6.8
+                    });
                     this.destroyEntity(entity);
                     return false;
                 }
@@ -1129,6 +1412,22 @@ export class RunScene extends Phaser.Scene {
             }
 
             if (entity.lane === this.playerCollisionLane && Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity, 0.62))) {
+                this.spawnDustBurst(entity.sprite.x, entity.sprite.y + 10, {
+                    tint: POWERUPS[entity.type].accent,
+                    count: 8,
+                    spreadX: 42,
+                    lift: 48,
+                    minScale: 1.8,
+                    maxScale: 3.2,
+                    alpha: 0.34,
+                    depth: 6.9
+                });
+                this.spawnImpactRing(entity.sprite.x, entity.sprite.y + 8, POWERUPS[entity.type].accent, {
+                    width: 54,
+                    height: 22,
+                    alpha: 0.26,
+                    depth: 6.85
+                });
                 this.applyPowerup(entity.type);
                 this.destroyEntity(entity);
                 return false;
@@ -1202,6 +1501,7 @@ export class RunScene extends Phaser.Scene {
     applyPowerup(type) {
         this.powerTimers[type] = POWERUPS[type].duration;
         if (type === "energy") this.stamina = Math.min(100, this.stamina + 18);
+        this.pulseStage(POWERUPS[type].accent, 0.07);
         emit("status", {
             label: "Boost Live",
             message: `${POWERUPS[type].label} collected for ${POWERUPS[type].duration}s.`,
@@ -1213,6 +1513,12 @@ export class RunScene extends Phaser.Scene {
         if (this.powerTimers.shield > 0) {
             this.powerTimers.shield = 0;
             this.cameras.main.flash(120, 126, 183, 255, false);
+            this.spawnImpactRing(this.playerX, this.player.y + 12, 0x7eb7ff, {
+                width: 110,
+                height: 54,
+                alpha: 0.34,
+                depth: 6.4
+            });
             emit("status", { label: "Shield Break", message: "Shield absorbed the impact.", tone: "boost" });
             return;
         }
@@ -1232,6 +1538,8 @@ export class RunScene extends Phaser.Scene {
             score: this.score,
             distance: this.distance,
             coins: this.coins,
+            biome: BIOMES[this.currentBiomeIndex].label,
+            phase: this.getSurvivalPhaseLabel(),
             startBiomeId: this.startBiomeId,
             unlockedThisRun: results.unlockedThisRun,
             nextUnlock: results.nextUnlock
@@ -1247,7 +1555,7 @@ export class RunScene extends Phaser.Scene {
     }
 
     getWarningText() {
-        if (!this.liveStarted) return "Hold the center";
+        if (!this.liveStarted) return "Brace for launch";
         if (!this.hazardsLive) return "Opening sprint";
 
         const activeThreats = this.threatLevels.filter((threat) => threat > 0.26).length;
@@ -1261,18 +1569,18 @@ export class RunScene extends Phaser.Scene {
         const spec = OBSTACLES[nearest.type];
 
         if (nearest.lane === this.targetLane && nearest.progress > 0.46) {
-            return spec.label;
+            return `Brace to ${spec.maneuver}`;
         }
 
         if (activeThreats >= 2 && this.threatLevels[this.targetLane] < 0.22) {
-            return "Hold the gap";
+            return "Thread the gap";
         }
 
         if (activeThreats >= 2) {
-            return "Find the lane";
+            return "Pressure gate";
         }
 
-        return `${LANE_LABELS[nearest.lane]}: ${spec.maneuver}`;
+        return `${LANE_LABELS[nearest.lane]} lane: ${spec.maneuver}`;
     }
 
     emitHud(force) {
@@ -1284,6 +1592,7 @@ export class RunScene extends Phaser.Scene {
             speed: this.currentSpeed * 0.24,
             stamina: this.stamina,
             biome: BIOMES[this.currentBiomeIndex].label,
+            phase: this.getSurvivalPhaseLabel(),
             warning: this.getWarningText(),
             countdown: this.getCountdownLabel(),
             powerups: Object.entries(this.powerTimers)
@@ -1304,7 +1613,8 @@ export class RunScene extends Phaser.Scene {
             score: this.score,
             distance: this.distance,
             coins: this.coins,
-            biome: BIOMES[this.currentBiomeIndex].label
+            biome: BIOMES[this.currentBiomeIndex].label,
+            phase: this.getSurvivalPhaseLabel()
         };
     }
 }
@@ -1378,7 +1688,7 @@ export class PauseScene extends Phaser.Scene {
         createMiniStat(this, WORLD.width / 2, 392, "Distance", `${formatInteger(snapshot.distance)} m`);
         createMiniStat(this, WORLD.width / 2 + 230, 392, "Tokens", formatInteger(snapshot.coins));
 
-        this.add.text(WORLD.width / 2, 492, `Current biome: ${snapshot.biome}`, {
+        this.add.text(WORLD.width / 2, 492, `Current track: ${snapshot.biome} · ${snapshot.phase}`, {
             fontFamily: "Sora",
             fontSize: "22px",
             color: "#d2dfef"
@@ -1438,7 +1748,7 @@ export class GameOverScene extends Phaser.Scene {
             wordWrap: { width: 760 }
         }).setOrigin(0.5);
 
-        this.add.text(WORLD.width / 2, 528, "Keep the line cleaner, build longer chains, and bank the next unlock.", {
+        this.add.text(WORLD.width / 2, 528, `Last line: ${data.biome} · ${data.phase}. Keep it cleaner and bank the next unlock.`, {
             fontFamily: "Sora",
             fontSize: "20px",
             color: "#aebfd6",
