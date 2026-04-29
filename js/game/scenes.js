@@ -1,64 +1,61 @@
 import { BIOMES, RUN_CONFIG, WORLD, formatInteger, getBiome, getCatalogItem } from "../config.js";
 import { applyRunResults, getProfile } from "../storage.js";
 
+const PLAYER = {
+    x: 360,
+    groundY: 790,
+    width: 276,
+    height: 202,
+    normalBounds: { x: -58, y: -162, width: 116, height: 148 },
+    duckBounds: { x: -72, y: -92, width: 144, height: 82 }
+};
+
 const OBSTACLES = {
     rock: {
         key: "obstacle-rock",
-        baseWidth: 124,
-        baseHeight: 82,
-        collisionWidth: 92,
-        collisionHeight: 58,
-        yLift: 24,
-        maneuver: "jump",
-        label: "Jump or switch"
+        label: "Rock",
+        action: "jump",
+        width: 126,
+        height: 84,
+        y: PLAYER.groundY + 4,
+        bounds: { x: -46, y: -66, width: 92, height: 58 },
+        warning: "Jump rocks"
     },
     crate: {
         key: "obstacle-crate",
-        baseWidth: 138,
-        baseHeight: 96,
-        collisionWidth: 98,
-        collisionHeight: 72,
-        yLift: 38,
-        maneuver: "jump",
-        label: "Jump or switch"
+        label: "Crate",
+        action: "jump",
+        width: 138,
+        height: 94,
+        y: PLAYER.groundY + 6,
+        bounds: { x: -52, y: -78, width: 104, height: 68 },
+        warning: "Jump crates"
     },
     branch: {
         key: "obstacle-branch",
-        baseWidth: 210,
-        baseHeight: 78,
-        collisionWidth: 166,
-        collisionHeight: 42,
-        yLift: 188,
-        maneuver: "duck",
-        label: "Duck or switch"
+        label: "Branch",
+        action: "duck",
+        width: 240,
+        height: 104,
+        y: PLAYER.groundY - 154,
+        bounds: { x: -106, y: -72, width: 212, height: 118 },
+        warning: "Duck branches"
     }
 };
 
 const POWERUPS = {
-    shield: { key: "powerup-shield", label: "Shield", duration: 10, accent: 0x7eb7ff, tone: "boost" },
-    rush: { key: "powerup-rush", label: "Rush", duration: 8, accent: 0xffa34d, tone: "boost" },
-    energy: { key: "powerup-energy", label: "Energy", duration: 9, accent: 0x82dd9e, tone: "boost" }
+    shield: { key: "powerup-shield", label: "Shield", duration: 12, accent: 0x7eb7ff },
+    rush: { key: "powerup-rush", label: "Rush", duration: 7, accent: 0xffb347 },
+    energy: { key: "powerup-energy", label: "Energy", duration: 3, accent: 0x82dd9e }
 };
 
-const LANE_LABELS = ["Left", "Center", "Right"];
-const SURVIVAL_PHASES = [
-    { label: "Opening Line", message: "Opening Line. Keep the center and read the first call.", tone: "info" },
-    { label: "Dust Chase", message: "Dust Chase. The rhythm tightens and gaps close faster.", tone: "info" },
-    { label: "Pressure Gate", message: "Pressure Gate. Safe lanes open later and punish hesitation.", tone: "warn" },
-    { label: "Redline", message: "Redline. Commit early and stay sharp through the squeeze.", tone: "warn" },
-    { label: "Final Thread", message: "Final Thread. Every lane call matters now.", tone: "warn" }
+const PHASES = [
+    { label: "Warmup", message: "Tap or press Space to jump. Collect the first coins.", threshold: 0 },
+    { label: "Clean Reads", message: "Rocks and crates need a jump. Branches need a duck.", threshold: 850 },
+    { label: "Quick Rhythm", message: "Hazards can repeat. Keep timing the jump or duck.", threshold: 2300 },
+    { label: "Mixed Timing", message: "Jump and duck calls now rotate faster.", threshold: 4600 },
+    { label: "Redline", message: "Speed is high. Commit early and stay smooth.", threshold: 7600 }
 ];
-const PLAYER = {
-    originY: 0.88,
-    width: 244,
-    height: 166,
-    duckHeight: 138,
-    colliderWidth: 92,
-    colliderHeight: 92,
-    colliderDuckWidth: 108,
-    colliderDuckHeight: 56,
-    colliderBottomInset: 6
-};
 
 function emit(eventName, detail) {
     window.dispatchEvent(new CustomEvent(`hill-cruze:${eventName}`, { detail }));
@@ -68,170 +65,69 @@ function biomeColor(biome) {
     return Phaser.Display.Color.HexStringToColor(biome.accent).color;
 }
 
-function rangeValue(range) {
+function randomRange(range) {
     return Phaser.Math.Between(range[0], range[1]);
-}
-
-function createButton(scene, x, y, label, onClick, options = {}) {
-    const { width = 360, variant = "primary" } = options;
-    const container = scene.add.container(x, y);
-    const isPrimary = variant === "primary";
-    const fillColor = isPrimary ? 0xffb347 : 0x0b1724;
-    const fillAlpha = isPrimary ? 1 : 0.82;
-    const strokeColor = isPrimary ? 0xffffff : 0xffe8bd;
-    const textColor = isPrimary ? "#160d06" : "#f5f8ff";
-    const shadow = scene.add.ellipse(0, 34, width * 0.72, 24, isPrimary ? 0xff9a31 : 0x08111a, isPrimary ? 0.26 : 0.18);
-    const glow = scene.add.rectangle(0, 0, width + 10, 82, isPrimary ? 0xffd27a : 0x7dc8ff, isPrimary ? 0.12 : 0.08).setAlpha(isPrimary ? 0.14 : 0.08);
-    const bg = scene.add.rectangle(0, 0, width, 68, fillColor, fillAlpha).setStrokeStyle(2, strokeColor, isPrimary ? 0.28 : 0.18);
-    const accent = scene.add.rectangle(0, -26, width * 0.82, 3, 0xffffff, isPrimary ? 0.46 : 0.18);
-    const shine = scene.add.rectangle((-width / 2) + 38, -1, 26, 78, 0xffffff, isPrimary ? 0.14 : 0.08).setAngle(16);
-    const text = scene.add.text(0, 0, label, {
-        fontFamily: "Teko",
-        fontSize: "34px",
-        fontStyle: "600",
-        letterSpacing: 4,
-        color: textColor
-    }).setOrigin(0.5).setY(1);
-
-    container.add([shadow, glow, bg, accent, shine, text]);
-    container.setSize(width, 68).setInteractive({ useHandCursor: true });
-
-    const tweenTo = (state) => {
-        scene.tweens.killTweensOf([container, shadow, glow, shine, accent, text]);
-        scene.tweens.add({
-            targets: container,
-            y: y + state.offsetY,
-            scaleX: state.scale,
-            scaleY: state.scale,
-            duration: state.duration,
-            ease: state.ease
-        });
-        scene.tweens.add({
-            targets: shadow,
-            alpha: state.shadowAlpha,
-            scaleX: state.shadowScaleX,
-            scaleY: state.shadowScaleY,
-            duration: state.duration,
-            ease: state.ease
-        });
-        scene.tweens.add({
-            targets: glow,
-            alpha: state.glowAlpha,
-            scaleX: state.glowScale,
-            scaleY: state.glowScale,
-            duration: state.duration,
-            ease: state.ease
-        });
-        scene.tweens.add({
-            targets: shine,
-            x: state.shineX,
-            alpha: state.shineAlpha,
-            duration: state.duration + 30,
-            ease: "Sine.Out"
-        });
-        scene.tweens.add({
-            targets: accent,
-            alpha: state.accentAlpha,
-            duration: state.duration,
-            ease: state.ease
-        });
-        scene.tweens.add({
-            targets: text,
-            y: 1 + state.textOffset,
-            duration: state.duration,
-            ease: state.ease
-        });
-    };
-
-    const restState = {
-        offsetY: 0,
-        scale: 1,
-        shadowAlpha: isPrimary ? 0.26 : 0.18,
-        shadowScaleX: 1,
-        shadowScaleY: 1,
-        glowAlpha: isPrimary ? 0.14 : 0.08,
-        glowScale: 1,
-        shineX: (-width / 2) + 38,
-        shineAlpha: isPrimary ? 0.14 : 0.08,
-        accentAlpha: isPrimary ? 0.46 : 0.18,
-        textOffset: 0,
-        duration: 140,
-        ease: "Quad.Out"
-    };
-    const hoverState = {
-        offsetY: -4,
-        scale: 1.025,
-        shadowAlpha: isPrimary ? 0.34 : 0.22,
-        shadowScaleX: 1.06,
-        shadowScaleY: 1.14,
-        glowAlpha: isPrimary ? 0.22 : 0.14,
-        glowScale: 1.04,
-        shineX: (width / 2) - 24,
-        shineAlpha: isPrimary ? 0.22 : 0.12,
-        accentAlpha: isPrimary ? 0.68 : 0.28,
-        textOffset: -1,
-        duration: 150,
-        ease: "Quad.Out"
-    };
-    const pressState = {
-        offsetY: 1,
-        scale: 0.988,
-        shadowAlpha: isPrimary ? 0.18 : 0.12,
-        shadowScaleX: 0.94,
-        shadowScaleY: 0.84,
-        glowAlpha: isPrimary ? 0.12 : 0.07,
-        glowScale: 0.96,
-        shineX: (-width / 2) + 52,
-        shineAlpha: isPrimary ? 0.18 : 0.1,
-        accentAlpha: isPrimary ? 0.36 : 0.16,
-        textOffset: 2,
-        duration: 90,
-        ease: "Quad.Out"
-    };
-
-    tweenTo(restState);
-
-    container.on("pointerover", () => tweenTo(hoverState));
-    container.on("pointerout", () => tweenTo(restState));
-    container.on("pointerdown", () => tweenTo(pressState));
-    container.on("pointerup", () => {
-        tweenTo(hoverState);
-        onClick();
-    });
-    return container;
 }
 
 function createPanel(scene, x, y, width, height, options = {}) {
     const {
         fillColor = 0x06111c,
-        fillAlpha = 0.82,
+        fillAlpha = 0.84,
         strokeColor = 0xffffff,
         strokeAlpha = 0.16
     } = options;
     const container = scene.add.container(x, y);
+    const shadow = scene.add.rectangle(0, 16, width, height, 0x000000, 0.18);
     const bg = scene.add.rectangle(0, 0, width, height, fillColor, fillAlpha).setStrokeStyle(2, strokeColor, strokeAlpha);
-    const accent = scene.add.rectangle(0, (-height / 2) + 6, width * 0.84, 3, 0xffd166, 0.52);
-    container.add([bg, accent]);
+    const accent = scene.add.rectangle(0, (-height / 2) + 6, width * 0.84, 3, 0xffd166, 0.5);
+    container.add([shadow, bg, accent]);
+    return container;
+}
+
+function createButton(scene, x, y, label, onClick, options = {}) {
+    const { width = 350, variant = "primary" } = options;
+    const isPrimary = variant === "primary";
+    const fill = isPrimary ? 0xffb347 : 0x0b1724;
+    const textColor = isPrimary ? "#160d06" : "#f5f8ff";
+    const container = scene.add.container(x, y);
+    const shadow = scene.add.ellipse(0, 36, width * 0.68, 24, 0x000000, 0.22);
+    const bg = scene.add.rectangle(0, 0, width, 70, fill, isPrimary ? 1 : 0.82).setStrokeStyle(2, 0xffffff, isPrimary ? 0.28 : 0.18);
+    const shine = scene.add.rectangle((-width / 2) + 36, -2, 26, 78, 0xffffff, isPrimary ? 0.14 : 0.08).setAngle(16);
+    const text = scene.add.text(0, 2, label, {
+        fontFamily: "Teko",
+        fontSize: "34px",
+        fontStyle: "600",
+        color: textColor
+    }).setOrigin(0.5);
+
+    container.add([shadow, bg, shine, text]);
+    container.setSize(width, 70).setInteractive({ useHandCursor: true });
+    container.on("pointerover", () => scene.tweens.add({ targets: container, scale: 1.025, y: y - 4, duration: 130, ease: "Quad.Out" }));
+    container.on("pointerout", () => scene.tweens.add({ targets: container, scale: 1, y, duration: 130, ease: "Quad.Out" }));
+    container.on("pointerdown", () => scene.tweens.add({ targets: container, scale: 0.98, y: y + 1, duration: 80, ease: "Quad.Out" }));
+    container.on("pointerup", () => {
+        scene.tweens.add({ targets: container, scale: 1.02, y: y - 3, duration: 100, ease: "Quad.Out" });
+        onClick();
+    });
     return container;
 }
 
 function createMiniStat(scene, x, y, label, value) {
     const container = scene.add.container(x, y);
-    const bg = scene.add.rectangle(0, 0, 212, 96, 0xffffff, 0.08).setStrokeStyle(2, 0xffffff, 0.14);
-    const labelText = scene.add.text(-82, -22, label, {
+    const bg = scene.add.rectangle(0, 0, 214, 96, 0xffffff, 0.08).setStrokeStyle(2, 0xffffff, 0.14);
+    const labelText = scene.add.text(-84, -22, label, {
         fontFamily: "Sora",
         fontSize: "14px",
         fontStyle: "700",
         color: "#aebfd6"
     });
-    const valueText = scene.add.text(-82, 6, value, {
+    const valueText = scene.add.text(-84, 8, value, {
         fontFamily: "Teko",
         fontSize: "42px",
-        color: "#fff5df",
-        letterSpacing: 2
+        color: "#fff5df"
     });
     container.add([bg, labelText, valueText]);
-    return { container, valueText };
+    return container;
 }
 
 export class BootScene extends Phaser.Scene {
@@ -244,40 +140,35 @@ export class BootScene extends Phaser.Scene {
             state: "loading",
             label: "Booting",
             title: "Preparing Hill Cruze",
-            message: "Generating procedural textures and initializing the renderer.",
+            message: "Generating runner textures and initializing the renderer.",
             progress: 0.08
         });
 
         const g = this.make.graphics({ x: 0, y: 0, add: false });
 
-        g.fillStyle(0xffffff, 0.16).fillRect(0, 10, 260, 18).fillRect(24, 44, 220, 10).fillRect(44, 72, 176, 8);
-        g.generateTexture("panel-grid", 260, 92);
-        g.clear();
-
-        g.fillStyle(0xffffff).fillEllipse(70, 110, 120, 78).fillEllipse(170, 80, 190, 110).fillEllipse(310, 116, 150, 72);
-        g.generateTexture("ridge-strip", 360, 180);
-        g.clear();
-
-        g.fillStyle(0xffffff).fillEllipse(70, 140, 130, 86).fillEllipse(210, 118, 180, 104).fillEllipse(320, 152, 112, 64);
-        g.generateTexture("canopy-strip", 360, 190);
-        g.clear();
-
-        g.fillStyle(0xffffff, 0.92).fillEllipse(74, 66, 128, 62).fillEllipse(154, 58, 152, 72).fillEllipse(254, 74, 112, 48);
+        g.fillStyle(0xffffff, 0.88)
+            .fillEllipse(74, 66, 128, 62)
+            .fillEllipse(154, 58, 152, 72)
+            .fillEllipse(254, 74, 112, 48);
         g.generateTexture("cloud-strip", 320, 140);
         g.clear();
 
-        g.fillStyle(0xff5d68, 0.16).fillEllipse(48, 24, 100, 34);
-        g.fillStyle(0xff5d68, 0.26).fillEllipse(48, 24, 76, 22);
-        g.generateTexture("danger-glow", 100, 48);
+        g.fillStyle(0xffffff, 0.14).fillRect(0, 20, 260, 16).fillRect(24, 54, 210, 10).fillRect(62, 82, 150, 8);
+        g.generateTexture("speed-lines", 260, 110);
         g.clear();
 
-        g.fillStyle(0xffd866, 0.12).fillCircle(32, 32, 30);
-        g.fillStyle(0xffd866, 0.24).fillCircle(32, 32, 22);
-        g.generateTexture("reward-glow", 64, 64);
+        g.fillStyle(0xffffff, 0.9).fillCircle(8, 8, 8);
+        g.generateTexture("dust-dot", 16, 16);
         g.clear();
 
-        g.fillStyle(0xffffff, 0.88).fillCircle(6, 6, 6);
-        g.generateTexture("dust-dot", 12, 12);
+        g.fillStyle(0xffd866, 0.12).fillCircle(38, 38, 36);
+        g.fillStyle(0xffd866, 0.24).fillCircle(38, 38, 26);
+        g.generateTexture("reward-glow", 76, 76);
+        g.clear();
+
+        g.fillStyle(0xff5d68, 0.14).fillEllipse(62, 28, 124, 42);
+        g.fillStyle(0xff5d68, 0.28).fillEllipse(62, 28, 86, 24);
+        g.generateTexture("danger-glow", 124, 56);
         g.destroy();
 
         this.scene.start("PreloadScene");
@@ -291,37 +182,35 @@ export class PreloadScene extends Phaser.Scene {
 
     preload() {
         emit("mode", { mode: "loading" });
-        emit("status", { label: "Course Status", message: "Loading art and lane systems.", tone: "info" });
+        emit("status", { label: "Course Status", message: "Loading side-scroller assets.", tone: "info" });
         emit("loader", {
             state: "loading",
             label: "Loading",
-            title: "Loading Course Assets",
-            message: "Streaming backgrounds, sprites, and run logic.",
+            title: "Loading Runner Assets",
+            message: "Streaming backgrounds, cyclist art, obstacles, coins, and powerups.",
             progress: 0.12
         });
 
         this.cameras.main.setBackgroundColor("#07111a");
         this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x07111a, 1);
-        this.add.image(WORLD.width / 2, WORLD.height / 2 + 160, "panel-grid").setAlpha(0.08).setScale(5.4);
+        this.add.tileSprite(WORLD.width / 2, WORLD.height / 2, WORLD.width + 300, 120, "speed-lines").setAlpha(0.12);
 
-        const label = this.add.text(WORLD.width / 2, WORLD.height / 2 - 92, "Loading Course", {
+        const title = this.add.text(WORLD.width / 2, WORLD.height / 2 - 92, "Loading Run", {
             fontFamily: "Teko",
             fontSize: "104px",
-            color: "#fff7df",
-            letterSpacing: 6
+            color: "#fff7df"
         }).setOrigin(0.5);
-        const status = this.add.text(WORLD.width / 2, WORLD.height / 2 - 10, "Preparing backgrounds, sprites, and lane telegraphs", {
+        const status = this.add.text(WORLD.width / 2, WORLD.height / 2 - 10, "Preparing cyclist, hills, rewards, and hazards", {
             fontFamily: "Sora",
             fontSize: "22px",
             color: "#cedbea"
         }).setOrigin(0.5);
-        const barBg = this.add.rectangle(WORLD.width / 2, WORLD.height / 2 + 56, 540, 18, 0xffffff, 0.12).setStrokeStyle(2, 0xffffff, 0.12);
-        const bar = this.add.rectangle(WORLD.width / 2 - 266, WORLD.height / 2 + 56, 0, 18, 0xffb347, 1).setOrigin(0, 0.5);
-        const percent = this.add.text(WORLD.width / 2, WORLD.height / 2 + 118, "0%", {
+        const bar = this.add.rectangle(WORLD.width / 2 - 266, WORLD.height / 2 + 58, 0, 18, 0xffb347, 1).setOrigin(0, 0.5);
+        this.add.rectangle(WORLD.width / 2, WORLD.height / 2 + 58, 540, 18, 0xffffff, 0.12).setStrokeStyle(2, 0xffffff, 0.12);
+        const percent = this.add.text(WORLD.width / 2, WORLD.height / 2 + 120, "0%", {
             fontFamily: "Teko",
             fontSize: "52px",
-            color: "#ffdca0",
-            letterSpacing: 4
+            color: "#ffdca0"
         }).setOrigin(0.5);
 
         this.load.on("progress", (value) => {
@@ -330,8 +219,8 @@ export class PreloadScene extends Phaser.Scene {
             emit("loader", {
                 state: "loading",
                 label: "Loading",
-                title: "Loading Course Assets",
-                message: "Streaming backgrounds, sprites, and run logic.",
+                title: "Loading Runner Assets",
+                message: "Streaming backgrounds, cyclist art, obstacles, coins, and powerups.",
                 progress: 0.12 + (value * 0.78)
             });
         });
@@ -344,25 +233,20 @@ export class PreloadScene extends Phaser.Scene {
                 message: `Unable to load ${file.key}. Retry the page load.`,
                 progress: 1
             });
-            emit("status", {
-                label: "Load Error",
-                message: `Asset load failed for ${file.key}. Retry the page load.`,
-                tone: "warn"
-            });
+            emit("status", { label: "Load Error", message: `Asset load failed for ${file.key}. Retry the page load.`, tone: "warn" });
         });
 
         this.load.on("complete", () => {
-            label.setText("Course Ready");
-            status.setText("Entering the staging menu");
-            emit("status", { label: "Course Status", message: "Course ready. Entering the staging menu.", tone: "info" });
+            title.setText("Ready");
+            status.setText("Opening the tutorial menu");
             emit("loader", {
                 state: "loading",
                 label: "Ready",
                 title: "Course Ready",
-                message: "Finalizing the staging menu.",
+                message: "Opening the tutorial menu.",
                 progress: 1
             });
-            this.time.delayedCall(220, () => this.scene.start("MenuScene"));
+            this.time.delayedCall(180, () => this.scene.start("MenuScene"));
         });
 
         BIOMES.forEach((biome) => this.load.image(biome.id, biome.asset));
@@ -374,8 +258,6 @@ export class PreloadScene extends Phaser.Scene {
         this.load.svg("powerup-shield", "assets/sprites/powerup-shield.svg");
         this.load.svg("powerup-rush", "assets/sprites/powerup-rush.svg");
         this.load.svg("powerup-energy", "assets/sprites/powerup-energy.svg");
-
-        void barBg;
     }
 }
 
@@ -390,7 +272,7 @@ export class MenuScene extends Phaser.Scene {
 
         emit("mode", { mode: "menu" });
         emit("profile", { profile });
-        emit("status", { label: "Staging", message: "Course ready. Launch when you are set.", tone: "info" });
+        emit("status", { label: "Tutorial", message: "Jump low hazards. Duck high hazards. Collect coins.", tone: "info" });
         emit("hud", {
             score: 0,
             distance: 0,
@@ -398,100 +280,96 @@ export class MenuScene extends Phaser.Scene {
             speed: 0,
             stamina: 100,
             biome: biome.label,
-            phase: "Staging",
-            warning: "Clear track",
+            phase: "Tutorial",
+            warning: "Tap or press Space to jump",
             countdown: "",
             powerups: []
         });
 
         this.add.image(WORLD.width / 2, WORLD.height / 2, biome.id).setDisplaySize(WORLD.width, WORLD.height);
-        this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x040a11, 0.52);
-        this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, biomeColor(biome), 0.08);
-        this.add.tileSprite(WORLD.width / 2, 170, WORLD.width + 280, 160, "cloud-strip").setAlpha(0.18);
+        this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x030812, 0.52);
+        this.add.tileSprite(WORLD.width / 2, 154, WORLD.width + 260, 140, "cloud-strip").setTint(0xffffff).setAlpha(0.22);
 
-        const title = this.add.text(WORLD.width / 2, 164, "Hill Cruze", {
+        this.drawMenuGround(biome);
+        const cyclist = this.add.sprite(410, PLAYER.groundY, "cyclist").setOrigin(0.5, 1).setDisplaySize(PLAYER.width, PLAYER.height).setDepth(7);
+        this.tweens.add({ targets: cyclist, y: PLAYER.groundY - 8, duration: 520, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+
+        this.add.text(118, 130, "Hill Cruze", {
             fontFamily: "Teko",
-            fontSize: "146px",
-            color: "#fff7df",
-            letterSpacing: 8
-        }).setOrigin(0.5);
-        const subtitle = this.add.text(WORLD.width / 2, 256, "Pure survival downhill lines with truthful lanes and biome pressure", {
+            fontSize: "142px",
+            color: "#fff7df"
+        }).setDepth(8);
+        this.add.text(124, 242, "A cyclist spin on the classic endless runner.", {
             fontFamily: "Sora",
             fontSize: "28px",
             color: "#dce7f6"
-        }).setOrigin(0.5);
+        }).setDepth(8);
 
-        const panel = createPanel(this, WORLD.width / 2, 610, 980, 520);
-        const heading = this.add.text(WORLD.width / 2, 428, `Staging In ${biome.label}`, {
+        createPanel(this, 1262, 500, 800, 560, {
+            fillColor: 0x07111c,
+            fillAlpha: 0.84,
+            strokeColor: biomeColor(biome),
+            strokeAlpha: 0.3
+        }).setDepth(8);
+        this.add.text(950, 276, "How to ride", {
             fontFamily: "Teko",
-            fontSize: "78px",
-            color: "#fff2d2",
-            letterSpacing: 4
-        }).setOrigin(0.5);
-        const body = this.add.text(WORLD.width / 2, 504,
-            `Rider: ${getCatalogItem("riders", profile.selectedRider).label}\nBike: ${getCatalogItem("bikes", profile.selectedBike).label}\nBadge: ${getCatalogItem("badges", profile.selectedBadge).label}\nStored tokens: ${formatInteger(profile.totalCoins)}`,
-            {
-                fontFamily: "Sora",
-                fontSize: "24px",
-                color: "#cfdced",
-                align: "center",
-                lineSpacing: 14
-            }
-        ).setOrigin(0.5);
+            fontSize: "74px",
+            color: "#fff2d2"
+        }).setDepth(9);
 
-        const controls = this.add.text(WORLD.width / 2, 720,
-            "Left / Right commits the lane. Jump low hazards. Duck branches. Hold Shift or tap boost only when the line is clear.",
-            {
+        const controls = [
+            ["Space / Up / W / Tap", "Jump rocks, crates, and coin arcs"],
+            ["Down / S / Hold", "Duck under branches"],
+            ["Shift / Boost Button", "Spend stamina for short speed bursts"],
+            ["Esc", "Pause the run"]
+        ];
+        controls.forEach(([key, copy], index) => {
+            const y = 380 + (index * 78);
+            this.add.text(970, y, key, {
+                fontFamily: "Teko",
+                fontSize: "36px",
+                color: "#ffdca0"
+            }).setDepth(9);
+            this.add.text(1266, y + 6, copy, {
                 fontFamily: "Sora",
-                fontSize: "21px",
-                color: "#eef5ff",
-                align: "center",
-                wordWrap: { width: 760 }
-            }
-        ).setOrigin(0.5);
+                fontSize: "22px",
+                color: "#d6e4f4"
+            }).setDepth(9);
+        });
 
-        createButton(this, WORLD.width / 2, 814, "Start Run", () => {
+        this.add.text(960, 714, `Opening climate: ${biome.label}\nBest score: ${formatInteger(profile.bestScore)}   Coins: ${formatInteger(profile.totalCoins)}`, {
+            fontFamily: "Sora",
+            fontSize: "22px",
+            color: "#aebfd6",
+            lineSpacing: 12
+        }).setDepth(9);
+
+        createButton(this, 1262, 850, "Start Ride", () => {
             this.scene.start("RunScene", { startBiomeId: profile.selectedBackgroundPack });
-        });
+        }, { width: 390 }).setDepth(9);
+    }
 
-        const legendLeft = this.add.container(WORLD.width / 2 - 212, 924);
-        legendLeft.add([
-            this.add.sprite(0, 0, "obstacle-rock").setDisplaySize(88, 58),
-            this.add.text(86, 0, "Jump low hazards\nor switch lanes early", {
-                fontFamily: "Sora",
-                fontSize: "18px",
-                color: "#ffe2d8",
-                lineSpacing: 8
-            }).setOrigin(0, 0.5)
-        ]);
-
-        const legendRight = this.add.container(WORLD.width / 2 + 126, 924);
-        legendRight.add([
-            this.add.sprite(0, 0, "coin").setScale(0.92),
-            this.add.text(84, 0, "Collect bright rewards\nfor score, tokens, and boosts", {
-                fontFamily: "Sora",
-                fontSize: "18px",
-                color: "#fff4d1",
-                lineSpacing: 8
-            }).setOrigin(0, 0.5)
-        ]);
-
-        this.tweens.add({
-            targets: [title, subtitle, heading, body, controls, panel],
-            alpha: { from: 0, to: 1 },
-            y: "-=12",
-            duration: 520,
-            ease: "Quad.Out",
-            stagger: 34
-        });
-        this.tweens.add({
-            targets: title,
-            scale: { from: 0.985, to: 1.02 },
-            duration: 1800,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.InOut"
-        });
+    drawMenuGround(biome) {
+        const g = this.add.graphics().setDepth(4);
+        g.fillStyle(biome.ridgeTint, 0.82);
+        g.beginPath();
+        g.moveTo(0, PLAYER.groundY + 28);
+        for (let x = 0; x <= WORLD.width; x += 52) {
+            const y = PLAYER.groundY + 12 + Math.sin(x * 0.009) * 26 + Math.sin(x * 0.019) * 10;
+            g.lineTo(x, y);
+        }
+        g.lineTo(WORLD.width, WORLD.height);
+        g.lineTo(0, WORLD.height);
+        g.closePath();
+        g.fillPath();
+        g.lineStyle(8, biome.laneTint, 0.92);
+        g.beginPath();
+        for (let x = 0; x <= WORLD.width; x += 52) {
+            const y = PLAYER.groundY + Math.sin(x * 0.009) * 26 + Math.sin(x * 0.019) * 10;
+            if (x === 0) g.moveTo(x, y);
+            else g.lineTo(x, y);
+        }
+        g.strokePath();
     }
 }
 
@@ -507,1023 +385,406 @@ export class RunScene extends Phaser.Scene {
 
     create() {
         this.controls = window.hillCruzeControls;
-        this.keys = this.input.keyboard.addKeys("LEFT,RIGHT,UP,DOWN,SPACE,W,A,S,D,SHIFT,ESC");
-
-        this.track = {
-            horizonY: 214,
-            laneTopX: [760, 960, 1160],
-            laneBottomX: [496, 960, 1424],
-            playerGroundY: 808
+        this.keys = {
+            up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
+            w: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+            space: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
+            down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
+            s: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+            shift: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
+            esc: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC)
         };
 
-        this.currentLane = 1;
-        this.targetLane = 1;
-        this.playerCollisionLane = 1;
-        this.playerX = this.track.laneBottomX[this.currentLane];
-        this.playerYOffset = 0;
-        this.playerVelocityY = 0;
-        this.isGrounded = true;
-        this.ducking = false;
-        this.finished = false;
-        this.distance = 0;
-        this.score = 0;
-        this.coins = 0;
-        this.currentSpeed = 0;
-        this.stamina = 100;
-        this.segmentIndex = 0;
         this.currentBiomeIndex = Math.max(0, BIOMES.findIndex((biome) => biome.id === this.startBiomeId));
-        this.powerTimers = { shield: 0, rush: 0, energy: 0 };
-        this.survivalTier = 0;
-        this.elapsedRunTime = 0;
-        this.spawnClock = { pattern: 920, powerup: 6200 };
-        this.hudClock = 0;
-        this.trackRedrawCooldown = 0;
-        this.floatTime = 0;
-        this.liveStarted = false;
-        this.hazardsLive = false;
-        this.warmupTrailSpawned = false;
+        this.nextBiomeIndex = this.currentBiomeIndex;
         this.entities = [];
-        this.threatLevels = [0, 0, 0];
-        this.lastPatternKey = null;
+        this.score = 0;
+        this.distance = 0;
+        this.coins = 0;
+        this.elapsed = 0;
+        this.runTime = 0;
+        this.currentSpeed = 0;
+        this.speedPulse = 0;
+        this.stamina = 100;
+        this.playerY = PLAYER.groundY;
+        this.velocityY = 0;
+        this.grounded = true;
+        this.ducking = false;
+        this.boosting = false;
+        this.finished = false;
+        this.hazardsLive = false;
+        this.phaseIndex = 0;
+        this.lastPhaseIndex = 0;
+        this.terrainOffset = 0;
+        this.cloudOffset = 0;
+        this.coinTimer = 820;
+        this.obstacleTimer = 1500;
+        this.powerupTimer = 7600;
+        this.dustTimer = 0;
+        this.hudTimer = 0;
+        this.themeSegment = 0;
+        this.powerTimers = { shield: 0, rush: 0, energy: 0 };
+        this.pointerDown = false;
+        this.pointerDownAt = 0;
+        this.pointerJumpQueued = false;
+        this.lastWarning = "Tap or press Space to jump";
 
-        this.backgrounds = BIOMES.map((biome, index) => this.add.image(WORLD.width / 2, WORLD.height / 2, biome.id)
-            .setDisplaySize(WORLD.width, WORLD.height)
-            .setAlpha(index === this.currentBiomeIndex ? 1 : 0)
-            .setDepth(0));
-
-        this.skyGlow = this.add.circle(1536, 164, 160, biomeColor(BIOMES[this.currentBiomeIndex]), 0.14).setDepth(0.3);
-        this.cloudLayer = this.add.tileSprite(WORLD.width / 2, 180, WORLD.width + 360, 180, "cloud-strip").setAlpha(0.2).setDepth(0.7);
-        this.ridgeLayer = this.add.tileSprite(WORLD.width / 2, 444, WORLD.width + 300, 300, "ridge-strip").setTint(BIOMES[this.currentBiomeIndex].ridgeTint).setAlpha(0.32).setDepth(1);
-        this.canopyLayer = this.add.tileSprite(WORLD.width / 2, 566, WORLD.width + 320, 340, "canopy-strip").setTint(BIOMES[this.currentBiomeIndex].canopyTint).setAlpha(0.48).setDepth(1.5);
-        this.trackSheen = this.add.tileSprite(WORLD.width / 2, 844, WORLD.width + 320, 310, "panel-grid")
-            .setTint(BIOMES[this.currentBiomeIndex].laneTint)
-            .setAlpha(0.08)
-            .setDepth(3.1);
-
-        this.trackGraphics = this.add.graphics().setDepth(2);
-        this.laneGraphics = this.add.graphics().setDepth(4);
-
-        const rider = getCatalogItem("riders", this.profile.selectedRider);
-        const bike = getCatalogItem("bikes", this.profile.selectedBike);
-        this.playerShadow = this.add.ellipse(this.playerX, this.track.playerGroundY + 12, 140, 44, 0x000000, 0.22).setDepth(5);
-        this.playerAura = this.add.circle(this.playerX, this.track.playerGroundY - 84, 108, rider.accent, 0.12).setDepth(5.3);
-        this.player = this.add.sprite(this.playerX, this.track.playerGroundY, "cyclist").setOrigin(0.5, PLAYER.originY).setDepth(6);
-        this.player.setDisplaySize(PLAYER.width, PLAYER.height);
-        this.player.setTint(rider.accent, rider.suit, bike.frame, bike.trim);
-
-        this.cameras.main.setRoundPixels(true);
+        this.createWorld();
+        this.createPlayer();
+        this.createInput();
 
         emit("mode", { mode: "run" });
         emit("profile", { profile: this.profile });
-        emit("status", { label: "Countdown", message: "3. Hold the line and get ready.", tone: "info" });
-
-        this.drawTrack();
+        emit("status", { label: "Ready", message: "Countdown started. Jump, duck, boost, collect coins.", tone: "info" });
         this.emitHud(true);
     }
 
-    update(_, delta) {
-        const dt = Math.min(delta / 1000, 0.033);
-        if (this.finished) return;
-
-        this.elapsedRunTime += dt;
-        this.floatTime += dt;
-        const wasGrounded = this.isGrounded;
-
-        if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
-            emit("toggle-pause", {});
-        }
-
-        const leftPressed = Phaser.Input.Keyboard.JustDown(this.keys.LEFT) || Phaser.Input.Keyboard.JustDown(this.keys.A) || this.controls?.consume("left");
-        const rightPressed = Phaser.Input.Keyboard.JustDown(this.keys.RIGHT) || Phaser.Input.Keyboard.JustDown(this.keys.D) || this.controls?.consume("right");
-        const jumpPressed = Phaser.Input.Keyboard.JustDown(this.keys.UP) || Phaser.Input.Keyboard.JustDown(this.keys.W) || Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || this.controls?.consume("jump");
-        const duckHeld = this.keys.DOWN.isDown || this.keys.S.isDown || this.controls?.isDown("duck");
-        const boostHeld = this.keys.SHIFT.isDown || this.controls?.isDown("boost");
-
-        if (leftPressed) this.changeLane(-1);
-        if (rightPressed) this.changeLane(1);
-
-        const liveRun = this.elapsedRunTime >= RUN_CONFIG.countdownDuration;
-        const hazardsReady = this.elapsedRunTime >= RUN_CONFIG.countdownDuration + RUN_CONFIG.warmupDuration;
-
-        if (!this.liveStarted && liveRun) {
-            this.liveStarted = true;
-            emit("status", { label: "Run Live", message: "Ride live. Build speed and read the opening line.", tone: "info" });
-        }
-
-        if (!this.hazardsLive && hazardsReady) {
-            this.hazardsLive = true;
-            emit("status", { label: "Hazards Live", message: "Hazards are live. Read the incoming lane calls.", tone: "warn" });
-        }
-
-        this.playerX = Phaser.Math.Linear(this.playerX, this.track.laneBottomX[this.targetLane], Math.min(1, dt * 12));
-        this.playerCollisionLane = this.getClosestLane(this.playerX);
-        this.ducking = duckHeld;
-
-        if (jumpPressed && this.isGrounded && liveRun) {
-            this.playerVelocityY = -RUN_CONFIG.jumpVelocity;
-            this.isGrounded = false;
-            this.cameras.main.shake(70, 0.0012);
-        }
-
-        this.playerVelocityY += RUN_CONFIG.gravity * dt;
-        this.playerYOffset += this.playerVelocityY * dt;
-        if (this.playerYOffset >= 0) {
-            this.playerYOffset = 0;
-            this.playerVelocityY = 0;
-            this.isGrounded = true;
-        }
-        if (!wasGrounded && this.isGrounded) {
-            this.spawnDustBurst(this.playerX, this.track.playerGroundY + 18, {
-                tint: BIOMES[this.currentBiomeIndex].laneTint,
-                count: 8,
-                spreadX: 70,
-                lift: 38,
-                minScale: 1.8,
-                maxScale: 3.5,
-                alpha: 0.38
-            });
-            this.spawnImpactRing(this.playerX, this.track.playerGroundY + 20, BIOMES[this.currentBiomeIndex].accent);
-        }
-
-        const rushBonus = this.powerTimers.rush > 0 ? 1.14 : 1;
-        const boostBonus = liveRun && boostHeld && this.stamina > 0 ? RUN_CONFIG.boostMultiplier : 1;
-        const baseSpeed = liveRun ? RUN_CONFIG.baseSpeed : 0;
-        this.currentSpeed = (baseSpeed + Math.min(RUN_CONFIG.maxBonusSpeed, this.distance * 0.22)) * rushBonus * boostBonus;
-
-        if (liveRun) {
-            this.stamina += (boostBonus > 1 ? -24 : 13) * dt;
-            if (this.powerTimers.energy > 0) this.stamina += 18 * dt;
-            this.stamina = Phaser.Math.Clamp(this.stamina, 0, 100);
-            this.distance += this.currentSpeed * dt * 0.09;
-            this.score += this.currentSpeed * dt * 0.52;
-        }
-
-        this.updateSurvivalTier();
-
-        Object.keys(this.powerTimers).forEach((key) => {
-            this.powerTimers[key] = Math.max(0, this.powerTimers[key] - dt);
-        });
-
-        const ambientSpeed = liveRun ? this.currentSpeed : 64;
-        this.cloudLayer.tilePositionX += ambientSpeed * dt * 0.008;
-        this.ridgeLayer.tilePositionX += ambientSpeed * dt * 0.018;
-        this.canopyLayer.tilePositionX += ambientSpeed * dt * 0.036;
-        this.trackSheen.tilePositionY += ambientSpeed * dt * 0.02;
-        this.trackSheen.tilePositionX += ambientSpeed * dt * 0.006;
-        this.skyGlow.setAlpha(0.1 + Math.sin(this.time.now * 0.0009) * 0.03);
-
-        if (liveRun && !this.warmupTrailSpawned) {
-            this.spawnCoinLine(this.targetLane, 5, { progressStart: 0.04, spacing: 0.07, lift: 182 });
-            this.warmupTrailSpawned = true;
-        }
-
-        if (this.hazardsLive) {
-            this.updateSpawns(delta);
-        }
-
-        this.updateEntities(dt);
-        this.updateBiomeCycle();
-        this.updatePlayerVisuals();
-
-        this.trackRedrawCooldown -= delta;
-        if (this.trackRedrawCooldown <= 0) {
-            this.drawTrack();
-            this.trackRedrawCooldown = 36;
-        }
-
-        this.hudClock += delta;
-        if (this.hudClock >= 80) {
-            this.emitHud(false);
-            this.hudClock = 0;
-        }
-    }
-
-    changeLane(direction) {
-        const nextLane = Phaser.Math.Clamp(this.targetLane + direction, 0, 2);
-        if (nextLane === this.targetLane) return;
-
-        this.targetLane = nextLane;
-        this.spawnDustBurst(this.playerX, this.track.playerGroundY + 18, {
-            tint: BIOMES[this.currentBiomeIndex].laneTint,
-            count: 6,
-            spreadX: 58,
-            lift: 28,
-            minScale: 1.4,
-            maxScale: 2.8,
-            alpha: 0.28
-        });
-        this.spawnLaneSignal(nextLane, biomeColor(BIOMES[this.currentBiomeIndex]), {
-            width: 132,
-            height: 30,
-            alpha: 0.14,
-            lifespan: 240,
-            y: this.track.playerGroundY + 8
-        });
-    }
-
-    getClosestLane(x) {
-        let closestLane = 0;
-        let minDistance = Number.POSITIVE_INFINITY;
-        this.track.laneBottomX.forEach((laneX, index) => {
-            const distance = Math.abs(laneX - x);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestLane = index;
-            }
-        });
-        return closestLane;
-    }
-
-    getPerspectivePoint(lane, progress) {
-        const clamped = Phaser.Math.Clamp(progress, 0, 1);
-        const eased = Phaser.Math.Easing.Cubic.Out(clamped);
-        return {
-            x: Phaser.Math.Linear(this.track.laneTopX[lane], this.track.laneBottomX[lane], eased),
-            y: Phaser.Math.Linear(this.track.horizonY + 20, this.track.playerGroundY + 22, eased)
-        };
-    }
-
-    getPerspectiveScale(progress, minScale = 0.24, maxScale = 1.02) {
-        return Phaser.Math.Linear(minScale, maxScale, Phaser.Math.Clamp(progress, 0, 1));
-    }
-
-    getSurvivalTierByDistance(distance = this.distance) {
-        return Math.min(SURVIVAL_PHASES.length - 1, Math.floor(distance / 520));
-    }
-
-    getSurvivalPhaseLabel() {
-        return SURVIVAL_PHASES[this.survivalTier].label;
-    }
-
-    updateSurvivalTier() {
-        const nextTier = this.getSurvivalTierByDistance();
-        if (nextTier === this.survivalTier) return;
-
-        this.survivalTier = nextTier;
-        const phase = SURVIVAL_PHASES[this.survivalTier];
-        emit("status", {
-            label: `Phase ${this.survivalTier + 1}`,
-            message: phase.message,
-            tone: phase.tone
-        });
-        this.pulseStage(biomeColor(BIOMES[this.currentBiomeIndex]), 0.08 + (this.survivalTier * 0.01));
-        this.spawnLaneSignal(1, biomeColor(BIOMES[this.currentBiomeIndex]), {
-            width: 240,
-            height: 42,
-            alpha: 0.16,
-            lifespan: 420
-        });
-    }
-
-    pulseStage(color, alpha = 0.08) {
-        const pulse = this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, color, alpha).setDepth(2.9);
-        this.tweens.add({
-            targets: pulse,
-            alpha: 0,
-            duration: 320,
-            ease: "Quad.Out",
-            onComplete: () => pulse.destroy()
-        });
-    }
-
-    spawnDustBurst(x, y, options = {}) {
-        const {
-            tint = 0xf5cf72,
-            count = 6,
-            spreadX = 56,
-            lift = 26,
-            minScale = 1.4,
-            maxScale = 3,
-            alpha = 0.32,
-            depth = 5.1
-        } = options;
-
-        for (let index = 0; index < count; index += 1) {
-            const dust = this.add.image(
-                x + Phaser.Math.FloatBetween(-spreadX * 0.32, spreadX * 0.32),
-                y + Phaser.Math.FloatBetween(-10, 10),
-                "dust-dot"
-            ).setTint(tint).setAlpha(alpha).setScale(Phaser.Math.FloatBetween(1, 1.6)).setDepth(depth);
-
-            this.tweens.add({
-                targets: dust,
-                x: x + Phaser.Math.FloatBetween(-spreadX, spreadX),
-                y: y - Phaser.Math.FloatBetween(12, lift),
-                alpha: 0,
-                scale: Phaser.Math.FloatBetween(minScale, maxScale),
-                duration: Phaser.Math.Between(220, 420),
-                ease: "Quad.Out",
-                onComplete: () => dust.destroy()
-            });
-        }
-    }
-
-    spawnImpactRing(x, y, color, options = {}) {
-        const { width = 42, height = 18, alpha = 0.24, depth = 5.2 } = options;
-        const resolvedColor = typeof color === "string" ? Phaser.Display.Color.HexStringToColor(color).color : color;
-        const ring = this.add.ellipse(x, y, width, height, resolvedColor, alpha).setDepth(depth);
-        this.tweens.add({
-            targets: ring,
-            alpha: 0,
-            scaleX: 2.6,
-            scaleY: 2.2,
-            duration: 240,
-            ease: "Quad.Out",
-            onComplete: () => ring.destroy()
-        });
-    }
-
-    spawnLaneSignal(lane, color, options = {}) {
-        const {
-            width = 124,
-            height = 24,
-            alpha = 0.18,
-            lifespan = 300,
-            y = this.track.horizonY + 34
-        } = options;
-        const x = this.track.laneTopX[lane];
-        const signal = this.add.ellipse(x, y, width, height, color, alpha).setDepth(5.05);
-        const stripe = this.add.rectangle(x, y - 2, width * 0.62, 4, 0xffffff, alpha + 0.16).setDepth(5.08);
-
-        this.tweens.add({
-            targets: signal,
-            alpha: 0,
-            scaleX: 1.7,
-            scaleY: 2.2,
-            duration: lifespan,
-            ease: "Quad.Out",
-            onComplete: () => signal.destroy()
-        });
-        this.tweens.add({
-            targets: stripe,
-            alpha: 0,
-            scaleX: 1.32,
-            duration: lifespan,
-            ease: "Quad.Out",
-            onComplete: () => stripe.destroy()
-        });
-    }
-
-    drawTrack() {
+    createWorld() {
         const biome = BIOMES[this.currentBiomeIndex];
-        const accent = biomeColor(biome);
-        const leftTop = this.track.laneTopX[0] - 154;
-        const rightTop = this.track.laneTopX[2] + 154;
-        const leftBottom = this.track.laneBottomX[0] - 286;
-        const rightBottom = this.track.laneBottomX[2] + 286;
-        const g = this.trackGraphics;
-        const fx = this.laneGraphics;
+        this.bg = this.add.image(WORLD.width / 2, WORLD.height / 2, biome.id).setDisplaySize(WORLD.width, WORLD.height).setDepth(0);
+        this.bgNext = this.add.image(WORLD.width / 2, WORLD.height / 2, biome.id).setDisplaySize(WORLD.width, WORLD.height).setDepth(0.1).setAlpha(0);
+        this.tint = this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, biomeColor(biome), 0.06).setDepth(0.2);
+        this.skyShade = this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x020610, 0.18).setDepth(0.25);
+        this.cloudsFar = this.add.tileSprite(WORLD.width / 2, 150, WORLD.width + 360, 142, "cloud-strip").setDepth(1).setAlpha(0.24);
+        this.cloudsNear = this.add.tileSprite(WORLD.width / 2, 250, WORLD.width + 360, 142, "cloud-strip").setDepth(1.1).setAlpha(0.16).setScale(1.28);
+        this.hillBack = this.add.graphics().setDepth(2);
+        this.track = this.add.graphics().setDepth(4);
+        this.speedLines = this.add.tileSprite(WORLD.width / 2, 360, WORLD.width + 260, 110, "speed-lines").setDepth(5).setAlpha(0);
+        this.drawTerrain();
+    }
 
-        g.clear();
-        fx.clear();
+    createPlayer() {
+        this.playerShadow = this.add.ellipse(PLAYER.x, PLAYER.groundY + 20, 184, 30, 0x000000, 0.24).setDepth(5.2);
+        this.playerGroup = this.add.container(PLAYER.x, PLAYER.groundY).setDepth(8);
+        this.player = this.add.sprite(0, 0, "cyclist").setOrigin(0.5, 1).setDisplaySize(PLAYER.width, PLAYER.height);
 
-        g.fillStyle(0x071019, 0.38);
-        g.fillRect(0, this.track.horizonY - 36, WORLD.width, WORLD.height - this.track.horizonY + 36);
-
-        g.fillStyle(0x000000, 0.18);
-        g.beginPath();
-        g.moveTo(leftTop - 80, this.track.horizonY + 34);
-        g.lineTo(leftTop, this.track.horizonY);
-        g.lineTo(leftBottom, WORLD.height);
-        g.lineTo(leftBottom - 160, WORLD.height);
-        g.closePath();
-        g.fillPath();
-
-        g.beginPath();
-        g.moveTo(rightTop + 80, this.track.horizonY + 34);
-        g.lineTo(rightTop, this.track.horizonY);
-        g.lineTo(rightBottom, WORLD.height);
-        g.lineTo(rightBottom + 160, WORLD.height);
-        g.closePath();
-        g.fillPath();
-
-        g.fillStyle(biome.canopyTint, 0.18);
-        g.beginPath();
-        g.moveTo(leftTop - 100, this.track.horizonY + 90);
-        g.lineTo(rightTop + 100, this.track.horizonY + 90);
-        g.lineTo(rightBottom + 140, WORLD.height);
-        g.lineTo(leftBottom - 140, WORLD.height);
-        g.closePath();
-        g.fillPath();
-
-        g.fillStyle(biome.laneTint, 0.9);
-        g.beginPath();
-        g.moveTo(leftTop, this.track.horizonY);
-        g.lineTo(rightTop, this.track.horizonY);
-        g.lineTo(rightBottom, WORLD.height);
-        g.lineTo(leftBottom, WORLD.height);
-        g.closePath();
-        g.fillPath();
-
-        g.lineStyle(9, accent, 0.62);
-        g.beginPath();
-        g.moveTo(leftTop, this.track.horizonY + 4);
-        g.lineTo(leftBottom, WORLD.height);
-        g.moveTo(rightTop, this.track.horizonY + 4);
-        g.lineTo(rightBottom, WORLD.height);
-        g.strokePath();
-
-        g.fillStyle(0xffffff, 0.055);
-        g.beginPath();
-        g.moveTo(this.track.laneTopX[0], this.track.horizonY + 8);
-        g.lineTo(this.track.laneTopX[2], this.track.horizonY + 8);
-        g.lineTo(this.track.laneBottomX[2], WORLD.height);
-        g.lineTo(this.track.laneBottomX[0], WORLD.height);
-        g.closePath();
-        g.fillPath();
-
-        for (let marker = 1; marker <= 9; marker += 1) {
-            const progress = marker / 10;
-            const left = this.getPerspectivePoint(0, progress);
-            const right = this.getPerspectivePoint(2, progress);
-            g.lineStyle(Phaser.Math.Linear(1.5, 6, progress), 0xffffff, Phaser.Math.Linear(0.035, 0.12, progress));
-            g.beginPath();
-            g.moveTo(left.x, left.y + 6);
-            g.lineTo(right.x, right.y + 6);
-            g.strokePath();
-        }
-
-        for (let marker = 1; marker <= 11; marker += 1) {
-            const progress = marker / 12;
-            const left = this.getPerspectivePoint(0, progress);
-            const right = this.getPerspectivePoint(2, progress);
-            const stripLength = Phaser.Math.Linear(16, 62, progress);
-            const stripOffset = Phaser.Math.Linear(8, 26, progress);
-            const stripWidth = Phaser.Math.Linear(2, 8, progress);
-            const stripColor = marker % 2 === 0 ? accent : 0xffffff;
-            const stripAlpha = Phaser.Math.Linear(0.08, 0.24, progress);
-
-            g.lineStyle(stripWidth, stripColor, stripAlpha);
-            g.beginPath();
-            g.moveTo(left.x - stripOffset, left.y + 10);
-            g.lineTo(left.x - stripOffset - stripLength, left.y + 28);
-            g.moveTo(right.x + stripOffset, right.y + 10);
-            g.lineTo(right.x + stripOffset + stripLength, right.y + 28);
-            g.strokePath();
-        }
-
-        this.threatLevels.forEach((threat, lane) => {
-            const active = lane === this.targetLane;
-            const color = threat > 0.24 ? 0xff5d68 : (active ? 0xffffff : accent);
-            const alpha = active ? 0.5 : Math.max(0.12, threat * 0.34);
-            const width = active ? 7 : 4;
-            fx.lineStyle(width, color, alpha);
-            fx.beginPath();
-            for (let step = 0; step <= 16; step += 1) {
-                const progress = step / 16;
-                const point = this.getPerspectivePoint(lane, progress);
-                if (step === 0) fx.moveTo(point.x, point.y);
-                else fx.lineTo(point.x, point.y);
-            }
-            fx.strokePath();
-
-            for (let marker = 2; marker <= 13; marker += 1) {
-                const progress = marker / 14;
-                const point = this.getPerspectivePoint(lane, progress);
-                const size = Phaser.Math.Linear(6, 44, progress);
-                fx.fillStyle(color, active ? Phaser.Math.Linear(0.12, 0.3, progress) : Phaser.Math.Linear(0.06, 0.16, progress));
-                fx.fillEllipse(point.x, point.y + (size * 0.08), size * 0.62, size * 0.18);
-            }
-
-            if (threat > 0.28) {
-                const signalPoint = this.getPerspectivePoint(lane, 0.16);
-                const gateWidth = Phaser.Math.Linear(44, 88, threat);
-                fx.lineStyle(Phaser.Math.Linear(2.5, 4.5, threat), color, Phaser.Math.Linear(0.28, 0.52, threat));
-                fx.beginPath();
-                fx.moveTo(signalPoint.x - gateWidth, signalPoint.y - 14);
-                fx.lineTo(signalPoint.x, signalPoint.y - 2);
-                fx.lineTo(signalPoint.x + gateWidth, signalPoint.y - 14);
-                fx.strokePath();
-                fx.fillStyle(color, Phaser.Math.Linear(0.12, 0.22, threat));
-                fx.fillCircle(signalPoint.x, signalPoint.y - 12, Phaser.Math.Linear(8, 14, threat));
-            }
+        this.wheelSprites = [];
+        [-84, 82].forEach((x) => {
+            const ring = this.add.circle(x, -48, 31).setStrokeStyle(4, 0xffffff, 0.24);
+            const spokeA = this.add.rectangle(x, -48, 56, 3, 0xffffff, 0.26);
+            const spokeB = this.add.rectangle(x, -48, 56, 3, 0xffffff, 0.2).setAngle(90);
+            this.wheelSprites.push(spokeA, spokeB);
+            this.playerGroup.add([ring, spokeA, spokeB]);
         });
-
-        fx.fillStyle(accent, 0.16);
-        fx.fillEllipse(WORLD.width / 2, this.track.horizonY + 12, 480, 58);
-
-        const activeLanePoint = this.getPerspectivePoint(this.targetLane, 0.9);
-        const lanePulse = 168 + Math.sin(this.time.now * 0.01) * 18 + (this.currentSpeed * 0.02);
-        fx.fillStyle(0xffffff, 0.14 + (this.currentSpeed / 4600));
-        fx.fillEllipse(activeLanePoint.x, activeLanePoint.y + 8, lanePulse, 34);
-
-        const bottomLanePoint = this.getPerspectivePoint(this.targetLane, 1);
-        const chevronWidth = 42;
-        fx.fillStyle(0xffffff, 0.16);
-        fx.beginPath();
-        fx.moveTo(bottomLanePoint.x - chevronWidth, bottomLanePoint.y + 18);
-        fx.lineTo(bottomLanePoint.x, bottomLanePoint.y + 42);
-        fx.lineTo(bottomLanePoint.x + chevronWidth, bottomLanePoint.y + 18);
-        fx.lineTo(bottomLanePoint.x + 22, bottomLanePoint.y + 18);
-        fx.lineTo(bottomLanePoint.x, bottomLanePoint.y + 30);
-        fx.lineTo(bottomLanePoint.x - 22, bottomLanePoint.y + 18);
-        fx.closePath();
-        fx.fillPath();
+        this.playerGroup.add(this.player);
     }
 
-    updatePlayerVisuals() {
-        const lean = Phaser.Math.Clamp((this.track.laneBottomX[this.targetLane] - this.playerX) / 220, -0.16, 0.16);
-        const bob = this.isGrounded ? Math.sin(this.floatTime * 10) * 3 : 0;
-        const groundY = this.track.playerGroundY;
-        const rider = getCatalogItem("riders", this.profile.selectedRider);
-        const speedLift = Phaser.Math.Clamp(this.currentSpeed / 1200, 0, 0.16);
-
-        this.player.x = this.playerX;
-        this.player.y = groundY + this.playerYOffset + bob;
-        this.player.setDisplaySize(PLAYER.width, this.ducking ? PLAYER.duckHeight : PLAYER.height);
-        this.player.setRotation(lean + speedLift + (this.isGrounded ? Math.sin(this.floatTime * 7) * 0.018 : -0.06));
-
-        this.playerShadow.x = this.playerX;
-        this.playerShadow.y = groundY + 18;
-        this.playerShadow.setScale(
-            this.isGrounded
-                ? 1 + Phaser.Math.Clamp(this.currentSpeed / 1800, 0, 0.12)
-                : Math.max(0.55, 1 - (Math.abs(this.playerYOffset) / 280))
-        );
-
-        this.playerAura.x = this.playerX;
-        this.playerAura.y = this.player.y - 108;
-        this.playerAura.setFillStyle(rider.accent, 0.1 + (this.powerTimers.rush > 0 ? 0.06 : 0));
-        this.playerAura.setScale(0.96 + Math.sin(this.time.now * 0.004) * 0.05 + Phaser.Math.Clamp(this.currentSpeed / 2600, 0, 0.06));
-    }
-
-    updateBiomeCycle() {
-        const nextSegment = Math.floor(this.distance / RUN_CONFIG.milestoneSpacing);
-        if (nextSegment <= this.segmentIndex) return;
-
-        this.segmentIndex = nextSegment;
-        const nextBiomeIndex = (Math.max(0, BIOMES.findIndex((biome) => biome.id === this.startBiomeId)) + nextSegment) % BIOMES.length;
-        const bonus = 25 + (nextSegment * 5);
-        this.coins += bonus;
-
-        if (nextBiomeIndex !== this.currentBiomeIndex) {
-            const previous = this.currentBiomeIndex;
-            this.currentBiomeIndex = nextBiomeIndex;
-            this.tweens.add({ targets: this.backgrounds[previous], alpha: 0, duration: 650, ease: "Quad.Out" });
-            this.backgrounds[this.currentBiomeIndex].setAlpha(0);
-            this.tweens.add({ targets: this.backgrounds[this.currentBiomeIndex], alpha: 1, duration: 650, ease: "Quad.Out" });
-            this.ridgeLayer.setTint(BIOMES[this.currentBiomeIndex].ridgeTint);
-            this.canopyLayer.setTint(BIOMES[this.currentBiomeIndex].canopyTint);
-            this.trackSheen.setTint(BIOMES[this.currentBiomeIndex].laneTint);
-            this.pulseStage(biomeColor(BIOMES[this.currentBiomeIndex]), 0.1);
-            this.spawnDustBurst(WORLD.width / 2, this.track.horizonY + 42, {
-                tint: BIOMES[this.currentBiomeIndex].laneTint,
-                count: 16,
-                spreadX: 260,
-                lift: 84,
-                minScale: 2.2,
-                maxScale: 4.2,
-                alpha: 0.26,
-                depth: 3.4
-            });
-        }
-
-        emit("status", {
-            label: "Milestone",
-            message: `${BIOMES[this.currentBiomeIndex].label} reached. Bonus awarded: ${bonus} tokens.`,
-            tone: "reward"
+    createInput() {
+        this.input.on("pointerdown", () => {
+            this.pointerDown = true;
+            this.pointerDownAt = this.time.now;
         });
-
-        if (this.scene.isActive("MilestoneScene")) this.scene.stop("MilestoneScene");
-        this.scene.launch("MilestoneScene", { biome: BIOMES[this.currentBiomeIndex], bonus });
+        this.input.on("pointerup", () => {
+            const heldFor = this.time.now - this.pointerDownAt;
+            if (heldFor > 0 && heldFor < 240) this.pointerJumpQueued = true;
+            this.pointerDown = false;
+            this.pointerDownAt = 0;
+        });
+        this.input.on("pointercancel", () => {
+            this.pointerDown = false;
+            this.pointerDownAt = 0;
+        });
     }
 
-    updateSpawns(delta) {
-        this.spawnClock.pattern -= delta;
-        this.spawnClock.powerup -= delta;
+    update(_, deltaMs) {
+        if (this.finished) return;
+        const dt = Math.min(deltaMs / 1000, 0.04);
 
-        if (this.spawnClock.pattern <= 0) {
-            this.spawnPattern();
-            const tierPressure = this.survivalTier * 74;
-            const nextInterval = rangeValue(RUN_CONFIG.patternInterval) - Math.min(460, (this.distance * 0.12) + tierPressure);
-            this.spawnClock.pattern = Math.max(430, nextInterval);
+        if (Phaser.Input.Keyboard.JustDown(this.keys.esc)) {
+            window.dispatchEvent(new CustomEvent("hill-cruze:toggle-pause"));
+            return;
         }
 
-        if (this.spawnClock.powerup <= 0) {
-            this.spawnPowerupDrop();
-            const powerupDelay = rangeValue(RUN_CONFIG.powerupInterval) - Math.min(1200, this.survivalTier * 220);
-            this.spawnClock.powerup = Math.max(3600, powerupDelay);
+        this.elapsed += dt;
+        const live = this.elapsed >= RUN_CONFIG.countdownDuration;
+        if (live) {
+            this.runTime += dt;
+            this.hazardsLive = this.runTime >= RUN_CONFIG.warmupDuration;
+        }
+
+        this.updatePhase();
+        this.updateMovement(dt, live);
+        this.updateSpawning(dt, live);
+        this.updateEntities(dt);
+        this.updateTerrain(dt);
+        this.updatePlayerVisual(dt);
+        this.updateTheme();
+        this.updatePowerTimers(dt);
+
+        this.hudTimer -= deltaMs;
+        if (this.hudTimer <= 0) {
+            this.hudTimer = 90;
+            this.emitHud();
         }
     }
 
-    spawnPattern() {
-        const patterns = [
-            { key: "coin-lane", fn: () => this.patternCoinLane() },
-            { key: "single-low", fn: () => this.patternSingleLow() },
-            { key: "single-high", fn: () => this.patternSingleHigh() }
-        ];
+    updatePhase() {
+        const pressure = this.distance + (this.score * 0.18) + (this.runTime * 150);
+        let nextPhase = 0;
+        PHASES.forEach((phase, index) => {
+            if (pressure >= phase.threshold) nextPhase = index;
+        });
+        this.phaseIndex = nextPhase;
 
-        if (this.survivalTier >= 1) {
-            patterns.push(
-                { key: "zig-zag", fn: () => this.patternZigZagCoins() },
-                { key: "double-tap", fn: () => this.patternDoubleTap() },
-                { key: "center-corridor", fn: () => this.patternCenterCorridor() }
-            );
+        if (this.phaseIndex !== this.lastPhaseIndex) {
+            this.lastPhaseIndex = this.phaseIndex;
+            const phase = PHASES[this.phaseIndex];
+            emit("status", { label: phase.label, message: phase.message, tone: this.phaseIndex > 1 ? "warn" : "info" });
         }
-        if (this.survivalTier >= 2) {
-            patterns.push(
-                { key: "dual-threat", fn: () => this.patternDualThreat() },
-                { key: "lane-sweep", fn: () => this.patternLaneSweep() }
-            );
-        }
-        if (this.survivalTier >= 3) {
-            patterns.push(
-                { key: "staggered", fn: () => this.patternStaggered() },
-                { key: "combo-box", fn: () => this.patternComboBox() },
-                { key: "power-pocket", fn: () => this.patternPowerPocket() }
-            );
-        }
-        if (this.survivalTier >= 4) {
-            patterns.push({ key: "pressure-pair", fn: () => this.patternPressurePair() });
-        }
-
-        const candidates = patterns.filter((pattern) => pattern.key !== this.lastPatternKey);
-        const choice = Phaser.Utils.Array.GetRandom(candidates.length ? candidates : patterns);
-        this.lastPatternKey = choice.key;
-        choice.fn();
     }
 
-    patternCoinLane() {
-        const lane = Phaser.Math.Between(0, 2);
-        this.spawnCoinLine(lane, 6, { progressStart: -0.02, spacing: 0.07, lift: 178 });
-    }
+    updateMovement(dt, live) {
+        const jumpPressed =
+            Phaser.Input.Keyboard.JustDown(this.keys.up) ||
+            Phaser.Input.Keyboard.JustDown(this.keys.w) ||
+            Phaser.Input.Keyboard.JustDown(this.keys.space) ||
+            this.controls?.consume("jump") ||
+            this.pointerJumpQueued;
+        this.pointerJumpQueued = false;
 
-    patternSingleLow() {
-        const lane = Phaser.Math.Between(0, 2);
-        const type = Phaser.Utils.Array.GetRandom(["rock", "crate"]);
-        const rewardLane = Phaser.Math.Between(0, 2);
+        const pointerHeldLong = this.pointerDown && (this.time.now - this.pointerDownAt > 260);
+        const duckHeld =
+            this.keys.down.isDown ||
+            this.keys.s.isDown ||
+            this.controls?.isDown("duck") ||
+            pointerHeldLong;
+        const boostHeld = this.keys.shift.isDown || this.controls?.isDown("boost");
 
-        this.spawnObstacle(type, lane, { progress: 0.02 });
+        if (live && jumpPressed && this.grounded) {
+            this.velocityY = -RUN_CONFIG.jumpVelocity;
+            this.grounded = false;
+            this.ducking = false;
+            this.spawnDustBurst(PLAYER.x - 18, PLAYER.groundY + 4, 0xd8b06d, 8, 42);
+            emit("status", { label: "Jump", message: "Airborne. Clear rocks, crates, and coin arcs.", tone: "info" });
+        }
 
-        if (rewardLane === lane) {
-            this.spawnCoinLine(lane, 4, { progressStart: -0.1, spacing: 0.07, lift: 210 });
+        this.ducking = live && duckHeld && this.grounded;
+        this.boosting = live && boostHeld && this.stamina > 1;
+
+        const rushBonus = this.powerTimers.rush > 0 ? 1.12 : 1;
+        const baseSpeed = RUN_CONFIG.baseSpeed + Math.min(RUN_CONFIG.maxBonusSpeed, (this.distance * 0.22) + (this.runTime * 10));
+        this.currentSpeed = live ? baseSpeed * rushBonus * (this.boosting ? RUN_CONFIG.boostMultiplier : 1) : 0;
+
+        if (this.boosting) {
+            this.stamina = Math.max(0, this.stamina - (36 * dt));
+            this.speedPulse = Math.min(1, this.speedPulse + (dt * 5));
         } else {
-            this.spawnCoinLine(rewardLane, 4, { progressStart: -0.02, spacing: 0.07, lift: 170 });
+            const recover = this.grounded && !this.ducking ? 18 : 11;
+            this.stamina = Math.min(100, this.stamina + (recover * dt));
+            this.speedPulse = Math.max(0, this.speedPulse - (dt * 3));
+        }
+
+        if (!this.grounded) {
+            this.velocityY += RUN_CONFIG.gravity * dt;
+            this.playerY += this.velocityY * dt;
+            if (this.playerY >= PLAYER.groundY) {
+                this.playerY = PLAYER.groundY;
+                this.velocityY = 0;
+                this.grounded = true;
+                this.spawnDustBurst(PLAYER.x - 10, PLAYER.groundY + 8, 0xcaa06a, 9, 48);
+            }
+        }
+
+        if (live) {
+            this.distance += this.currentSpeed * dt * 0.075;
+            this.score += this.currentSpeed * dt * (this.boosting ? 0.19 : 0.13);
         }
     }
 
-    patternSingleHigh() {
-        const lane = Phaser.Math.Between(0, 2);
-        const safeLane = Phaser.Math.Between(0, 2);
+    updateSpawning(dt, live) {
+        if (!live) return;
 
-        this.spawnObstacle("branch", lane, { progress: 0.02 });
+        this.coinTimer -= dt * 1000;
+        if (this.coinTimer <= 0) {
+            this.spawnCoinPattern();
+            this.coinTimer = randomRange(RUN_CONFIG.coinInterval) - Math.min(260, this.phaseIndex * 42);
+        }
 
-        if (safeLane === lane) {
-            this.spawnCoinLine((lane + 1) % 3, 4, { progressStart: -0.02, spacing: 0.07, lift: 170 });
-        } else {
-            this.spawnCoinLine(safeLane, 4, { progressStart: -0.02, spacing: 0.07, lift: 170 });
+        if (!this.hazardsLive) {
+            this.obstacleTimer = Math.max(this.obstacleTimer - (dt * 1000), 580);
+            return;
+        }
+
+        this.obstacleTimer -= dt * 1000;
+        if (this.obstacleTimer <= 0) {
+            this.spawnHazardPattern();
+            const squeeze = Math.min(360, this.phaseIndex * 90 + this.runTime * 2);
+            this.obstacleTimer = Math.max(580, randomRange(RUN_CONFIG.patternInterval) - squeeze);
+        }
+
+        this.powerupTimer -= dt * 1000;
+        if (this.powerupTimer <= 0) {
+            this.spawnPowerup();
+            this.powerupTimer = randomRange(RUN_CONFIG.powerupInterval);
         }
     }
 
-    patternZigZagCoins() {
-        const startLane = Phaser.Math.Between(0, 2);
-        const direction = startLane === 0 ? 1 : (startLane === 2 ? -1 : Phaser.Utils.Array.GetRandom([-1, 1]));
+    spawnHazardPattern() {
+        const groundType = Math.random() > 0.48 ? "rock" : "crate";
+        const highType = "branch";
 
-        for (let index = 0; index < 6; index += 1) {
-            const lane = Phaser.Math.Clamp(startLane + (index % 2 === 0 ? 0 : direction), 0, 2);
-            this.spawnCoin(lane, { progress: -0.02 - (index * 0.065), lift: 176 });
+        if (this.phaseIndex <= 1) {
+            this.spawnObstacle(Math.random() > 0.62 ? highType : groundType);
+            return;
         }
+
+        if (this.phaseIndex === 2) {
+            const repeatType = Math.random() > 0.5 ? groundType : highType;
+            this.spawnObstacle(repeatType, 0);
+            if (Math.random() > 0.46) this.spawnObstacle(repeatType, 360);
+            return;
+        }
+
+        const first = Math.random() > 0.5 ? groundType : highType;
+        const second = first === highType ? groundType : highType;
+        this.spawnObstacle(first, 0);
+        if (Math.random() > 0.28) this.spawnObstacle(second, this.phaseIndex >= 4 ? 330 : 390);
     }
 
-    patternDualThreat() {
-        const safeLane = Phaser.Math.Between(0, 2);
-        const blocked = [0, 1, 2].filter((lane) => lane !== safeLane);
-        const firstType = Phaser.Utils.Array.GetRandom(["rock", "crate", "branch"]);
-        const secondType = Phaser.Utils.Array.GetRandom(["rock", "crate", "branch"]);
-
-        this.spawnObstacle(firstType, blocked[0], { progress: 0.03 });
-        this.spawnObstacle(secondType, blocked[1], { progress: -0.12 });
-        this.spawnCoinLine(safeLane, 5, { progressStart: -0.02, spacing: 0.07, lift: 175 });
-    }
-
-    patternStaggered() {
-        const firstLane = Phaser.Math.Between(0, 2);
-        const secondLane = Phaser.Utils.Array.GetRandom([0, 1, 2].filter((lane) => lane !== firstLane));
-        const rewardLane = Phaser.Utils.Array.GetRandom([0, 1, 2].filter((lane) => lane !== secondLane));
-
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), firstLane, { progress: 0.02 });
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "branch"]), secondLane, { progress: -0.14 });
-        this.spawnCoinLine(rewardLane, 4, { progressStart: -0.04, spacing: 0.07, lift: 172 });
-    }
-
-    patternComboBox() {
-        const safeLane = Phaser.Utils.Array.GetRandom([0, 2]);
-        const branchLane = 1;
-        const lowLane = safeLane === 0 ? 2 : 0;
-
-        this.spawnObstacle("branch", branchLane, { progress: 0.04 });
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), lowLane, { progress: -0.08 });
-        this.spawnCoinLine(safeLane, 6, { progressStart: -0.02, spacing: 0.065, lift: 174 });
-    }
-
-    patternDoubleTap() {
-        const lane = Phaser.Math.Between(0, 2);
-        const safeLane = Phaser.Utils.Array.GetRandom([0, 1, 2].filter((candidate) => candidate !== lane));
-
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), lane, { progress: 0.06 });
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), lane, { progress: -0.18 });
-        this.spawnCoinLine(safeLane, 5, { progressStart: -0.03, spacing: 0.065, lift: 172 });
-    }
-
-    patternCenterCorridor() {
-        this.spawnObstacle("branch", 0, { progress: 0.03 });
-        this.spawnObstacle("branch", 2, { progress: -0.06 });
-        this.spawnCoinLine(1, 6, { progressStart: -0.02, spacing: 0.062, lift: 168 });
-    }
-
-    patternLaneSweep() {
-        const firstLane = Phaser.Math.Between(0, 2);
-        const secondLane = firstLane === 0 ? 1 : (firstLane === 2 ? 1 : Phaser.Utils.Array.GetRandom([0, 2]));
-        const safeLane = [0, 1, 2].find((lane) => lane !== firstLane && lane !== secondLane);
-
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), firstLane, { progress: 0.02 });
-        this.spawnObstacle("branch", secondLane, { progress: -0.14 });
-        this.spawnCoinLine(safeLane, 5, { progressStart: -0.04, spacing: 0.068, lift: 174 });
-    }
-
-    patternPowerPocket() {
-        const safeLane = Phaser.Math.Between(0, 2);
-        const blocked = [0, 1, 2].filter((lane) => lane !== safeLane);
-
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), blocked[0], { progress: 0.04 });
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["branch", "rock"]), blocked[1], { progress: -0.1 });
-        this.spawnPowerup(Phaser.Utils.Array.GetRandom(Object.keys(POWERUPS)), safeLane, { progress: -0.18, lift: 214 });
-    }
-
-    patternPressurePair() {
-        const safeLane = Phaser.Utils.Array.GetRandom([0, 2]);
-        const branchLane = safeLane === 0 ? 2 : 0;
-
-        this.spawnObstacle("branch", branchLane, { progress: 0.04 });
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), 1, { progress: -0.08 });
-        this.spawnObstacle(Phaser.Utils.Array.GetRandom(["rock", "crate"]), branchLane, { progress: -0.22 });
-        this.spawnCoinLine(safeLane, 6, { progressStart: -0.05, spacing: 0.06, lift: 176 });
-    }
-
-    spawnPowerupDrop() {
-        const lane = Phaser.Math.Between(0, 2);
-        const type = Phaser.Utils.Array.GetRandom(Object.keys(POWERUPS));
-
-        this.spawnPowerup(type, lane, { progress: -0.06, lift: 208 });
-        this.spawnCoinLine(lane, 3, { progressStart: -0.18, spacing: 0.07, lift: 192 });
-    }
-
-    spawnObstacle(type, lane, options = {}) {
+    spawnObstacle(type, extraX = 0) {
         const spec = OBSTACLES[type];
-        const sprite = this.add.sprite(0, 0, spec.key).setOrigin(0.5, 1).setDepth(6);
-        const glow = this.add.sprite(0, 0, "danger-glow").setDepth(5.2);
-        const shadow = this.add.ellipse(0, 0, 124, 34, 0x000000, 0.2).setDepth(4.8);
-        const warning = this.add.text(0, 0, `${LANE_LABELS[lane].toUpperCase()} ${spec.maneuver === "duck" ? "DUCK" : "JUMP"}`, {
-            fontFamily: "Teko",
-            fontSize: "38px",
-            color: "#fff2d2",
-            stroke: "#89212a",
-            strokeThickness: 6,
-            letterSpacing: 4
-        }).setOrigin(0.5).setDepth(5.4);
+        const sprite = this.add.sprite(WORLD.width + 170 + extraX, spec.y, spec.key)
+            .setDisplaySize(spec.width, spec.height)
+            .setDepth(type === "branch" ? 7.4 : 7.2);
+        if (type !== "branch") sprite.setOrigin(0.5, 1);
+
+        const glow = this.add.sprite(sprite.x, type === "branch" ? spec.y : PLAYER.groundY + 8, "danger-glow")
+            .setDepth(6.4)
+            .setAlpha(0.38)
+            .setTint(0xff5d68);
 
         this.entities.push({
             kind: "obstacle",
             type,
-            lane,
-            progress: options.progress ?? 0,
-            lift: options.lift ?? 0,
-            phase: Math.random() * 10,
             sprite,
             glow,
-            shadow,
-            warning
-        });
-
-        this.spawnLaneSignal(lane, type === "branch" ? 0x7dc8ff : 0xff7d1c, {
-            width: 152,
-            height: 28,
-            alpha: 0.16,
-            lifespan: 340
+            x: sprite.x,
+            cleared: false
         });
     }
 
-    spawnCoin(lane, options = {}) {
-        const sprite = this.add.sprite(0, 0, "coin").setOrigin(0.5).setDepth(6.4);
-        const glow = this.add.sprite(0, 0, "reward-glow").setTint(0xffd866).setDepth(5.2);
-        const shadow = this.add.ellipse(0, 0, 86, 24, 0x000000, 0.15).setDepth(4.8);
-
-        this.entities.push({
-            kind: "coin",
-            lane,
-            progress: options.progress ?? 0,
-            lift: options.lift ?? 178,
-            phase: options.phase ?? Math.random() * 6,
-            sprite,
-            glow,
-            shadow
-        });
-    }
-
-    spawnCoinLine(lane, count, options = {}) {
-        const progressStart = options.progressStart ?? 0;
-        const spacing = options.spacing ?? 0.07;
-        const lift = options.lift ?? 176;
+    spawnCoinPattern() {
+        const startX = WORLD.width + 150;
+        const count = this.phaseIndex < 2 ? 6 : Phaser.Math.Between(5, 9);
+        const arc = this.phaseIndex > 0 && Math.random() > 0.46;
+        const duckLine = this.phaseIndex > 2 && Math.random() > 0.68;
 
         for (let index = 0; index < count; index += 1) {
-            this.spawnCoin(lane, {
-                progress: progressStart - (index * spacing),
-                lift,
-                phase: index * 0.5
-            });
+            const x = startX + (index * 82);
+            let y = PLAYER.groundY - 158;
+            if (arc) y -= Math.sin(index / Math.max(1, count - 1) * Math.PI) * 118;
+            if (duckLine) y = PLAYER.groundY - 94;
+            this.spawnCoin(x, y, index);
         }
     }
 
-    spawnPowerup(type, lane, options = {}) {
-        const sprite = this.add.sprite(0, 0, POWERUPS[type].key).setOrigin(0.5).setDepth(6.5);
-        const glow = this.add.sprite(0, 0, "reward-glow").setTint(POWERUPS[type].accent).setDepth(5.3);
-        const shadow = this.add.ellipse(0, 0, 92, 26, 0x000000, 0.15).setDepth(4.8);
-
+    spawnCoin(x, y, index) {
+        const sprite = this.add.sprite(x, y, "coin").setDepth(7.1).setScale(0.84);
+        const glow = this.add.sprite(x, y, "reward-glow").setDepth(6.5).setTint(0xffd866).setAlpha(0.28).setScale(0.78);
         this.entities.push({
-            kind: "powerup",
-            type,
-            lane,
-            progress: options.progress ?? 0,
-            lift: options.lift ?? 206,
-            phase: Math.random() * 6,
+            kind: "coin",
             sprite,
             glow,
-            shadow
+            x,
+            baseY: y,
+            phase: index * 0.58
         });
+    }
 
-        this.spawnLaneSignal(lane, POWERUPS[type].accent, {
-            width: 120,
-            height: 24,
-            alpha: 0.12,
-            lifespan: 280
-        });
+    spawnPowerup() {
+        const types = this.stamina < 38 ? ["energy", "energy", "shield", "rush"] : ["shield", "rush", "energy"];
+        const type = Phaser.Utils.Array.GetRandom(types);
+        const spec = POWERUPS[type];
+        const x = WORLD.width + 220;
+        const y = PLAYER.groundY - 188;
+        const sprite = this.add.sprite(x, y, spec.key).setDepth(7.3).setScale(0.92);
+        const glow = this.add.sprite(x, y, "reward-glow").setDepth(6.5).setTint(spec.accent).setAlpha(0.36);
+        this.entities.push({ kind: "powerup", type, sprite, glow, x, baseY: y, phase: Math.random() * 6 });
     }
 
     updateEntities(dt) {
         const playerBounds = this.getPlayerBounds();
-        this.threatLevels = [0, 0, 0];
+        let nearestObstacle = null;
 
         this.entities = this.entities.filter((entity) => {
-            entity.progress += (0.22 + (this.currentSpeed / 2800)) * dt;
-
-            if (entity.progress > 1.18) {
-                this.destroyEntity(entity);
-                return false;
+            entity.x -= this.currentSpeed * dt;
+            if (entity.kind === "coin" || entity.kind === "powerup") {
+                entity.sprite.x = entity.x;
+                entity.sprite.y = entity.baseY + Math.sin((this.time.now * 0.006) + entity.phase) * 10;
+                entity.sprite.rotation += dt * (entity.kind === "coin" ? 4.4 : 1.1);
+                entity.glow.setPosition(entity.sprite.x, entity.sprite.y).setAlpha(entity.kind === "coin" ? 0.26 : 0.34);
+            } else {
+                entity.sprite.x = entity.x;
+                entity.glow.setPosition(entity.x, entity.type === "branch" ? entity.sprite.y : PLAYER.groundY + 10);
+                entity.glow.setAlpha(0.26 + Math.sin(this.time.now * 0.018) * 0.1);
             }
 
-            if (!this.positionEntity(entity)) {
-                return true;
+            if (entity.x < -240) {
+                this.destroyEntity(entity);
+                return false;
             }
 
             if (entity.kind === "obstacle") {
-                const spec = OBSTACLES[entity.type];
-                if (entity.progress > 0.04 && entity.progress < 0.92) {
-                    this.threatLevels[entity.lane] = Math.max(this.threatLevels[entity.lane], 1 - (entity.progress * 0.72));
-                }
-
-                if (entity.lane === this.playerCollisionLane && Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getObstacleBounds(entity))) {
+                if (!nearestObstacle || entity.x < nearestObstacle.x) nearestObstacle = entity;
+                const bounds = this.getObstacleBounds(entity);
+                if (Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, bounds)) {
+                    if (this.isObstacleCleared(entity.type)) {
+                        this.score += 35;
+                        this.spawnImpact(entity.x, entity.type === "branch" ? entity.sprite.y : PLAYER.groundY - 32, entity.type === "branch" ? 0x7dc8ff : 0xffd166);
+                        this.destroyEntity(entity);
+                        return false;
+                    }
+                    this.handleObstacleHit(entity.type);
                     this.destroyEntity(entity);
-                    this.handleObstacleHit(spec);
                     return false;
                 }
-
                 return true;
             }
 
-            if (entity.kind === "coin") {
-                if (entity.lane === this.playerCollisionLane && Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity, 0.56))) {
+            if (Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity))) {
+                if (entity.kind === "coin") {
                     this.coins += 1;
-                    this.score += 14;
-                    this.spawnDustBurst(entity.sprite.x, entity.sprite.y + 10, {
-                        tint: 0xffd866,
-                        count: 4,
-                        spreadX: 28,
-                        lift: 34,
-                        minScale: 1.2,
-                        maxScale: 2.2,
-                        alpha: 0.28,
-                        depth: 6.8
-                    });
-                    this.destroyEntity(entity);
-                    return false;
+                    this.score += 28;
+                    this.spawnImpact(entity.sprite.x, entity.sprite.y, 0xffd866);
+                    if (this.coins <= 3 || this.coins % 10 === 0) {
+                        emit("status", { label: "Coin", message: `${formatInteger(this.coins)} coins collected this run.`, tone: "reward" });
+                    }
+                } else {
+                    this.applyPowerup(entity.type);
+                    this.spawnImpact(entity.sprite.x, entity.sprite.y, POWERUPS[entity.type].accent);
                 }
-
-                return true;
-            }
-
-            if (entity.lane === this.playerCollisionLane && Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, this.getPickupBounds(entity, 0.62))) {
-                this.spawnDustBurst(entity.sprite.x, entity.sprite.y + 10, {
-                    tint: POWERUPS[entity.type].accent,
-                    count: 8,
-                    spreadX: 42,
-                    lift: 48,
-                    minScale: 1.8,
-                    maxScale: 3.2,
-                    alpha: 0.34,
-                    depth: 6.9
-                });
-                this.spawnImpactRing(entity.sprite.x, entity.sprite.y + 8, POWERUPS[entity.type].accent, {
-                    width: 54,
-                    height: 22,
-                    alpha: 0.26,
-                    depth: 6.85
-                });
-                this.applyPowerup(entity.type);
+                this.emitHud(true);
                 this.destroyEntity(entity);
                 return false;
             }
 
             return true;
         });
+
+        this.lastWarning = this.getWarningText(nearestObstacle);
     }
 
-    positionEntity(entity) {
-        const visible = entity.progress > -0.2;
-        entity.sprite.setVisible(visible);
-        if (entity.glow) entity.glow.setVisible(visible);
-        if (entity.shadow) entity.shadow.setVisible(visible);
-        if (entity.warning) entity.warning.setVisible(visible);
-        if (!visible) return false;
-
-        const point = this.getPerspectivePoint(entity.lane, entity.progress);
-
-        if (entity.kind === "obstacle") {
-            const spec = OBSTACLES[entity.type];
-            const scale = this.getPerspectiveScale(entity.progress, 0.32, 1.22);
-
-            entity.sprite.setDisplaySize(spec.baseWidth * scale, spec.baseHeight * scale);
-            entity.sprite.setPosition(point.x, point.y - (spec.yLift * scale));
-            entity.sprite.setDepth(6 + entity.progress);
-
-            entity.glow.setPosition(point.x, point.y - (spec.yLift * scale) + 10).setScale(scale).setAlpha(entity.lane === this.targetLane ? 0.52 : 0.38);
-            entity.shadow.setPosition(point.x, point.y + 10).setScale(scale, scale);
-            entity.warning.setPosition(this.track.laneTopX[entity.lane], this.track.horizonY + 40);
-            entity.warning.setAlpha(entity.progress < 0.38 ? 0.34 + Math.sin(this.time.now * 0.018) * 0.16 : Math.max(0, 0.62 - entity.progress));
-            entity.warning.setScale(0.78 + (1 - Phaser.Math.Clamp(entity.progress, 0, 1)) * 0.1);
-            return true;
-        }
-
-        const baseLift = entity.lift + Math.sin((this.time.now * 0.006) + entity.phase) * 12;
-        const scale = this.getPerspectiveScale(entity.progress, 0.24, entity.kind === "powerup" ? 0.94 : 0.86);
-        entity.sprite.setPosition(point.x, point.y - (baseLift * scale));
-        entity.sprite.setScale(scale);
-        entity.sprite.setRotation(entity.kind === "coin"
-            ? (this.time.now * 0.005) + entity.phase
-            : Math.sin((this.time.now * 0.004) + entity.phase) * 0.08);
-        entity.sprite.setDepth(6.2 + entity.progress);
-        entity.glow.setPosition(point.x, point.y - (baseLift * scale))
-            .setScale(scale * 0.84)
-            .setAlpha(entity.kind === "powerup" ? 0.44 : 0.28 + Math.sin((this.time.now * 0.008) + entity.phase) * 0.06);
-        entity.shadow.setPosition(point.x, point.y + 8).setScale(scale * 0.85, scale * 0.85);
-        return true;
+    isObstacleCleared(type) {
+        const spec = OBSTACLES[type];
+        if (spec.action === "duck") return this.ducking;
+        return !this.grounded && this.playerY < PLAYER.groundY - 74;
     }
 
-    getPlayerBounds() {
-        const width = this.ducking ? PLAYER.colliderDuckWidth : PLAYER.colliderWidth;
-        const height = this.ducking ? PLAYER.colliderDuckHeight : PLAYER.colliderHeight;
-        const bottom = this.player.y - PLAYER.colliderBottomInset;
-        return new Phaser.Geom.Rectangle(this.player.x - (width / 2), bottom - height, width, height);
-    }
+    handleObstacleHit(type) {
+        if (this.finished) return;
 
-    getObstacleBounds(entity) {
-        const spec = OBSTACLES[entity.type];
-        const width = entity.sprite.displayWidth * (spec.collisionWidth / spec.baseWidth);
-        const height = entity.sprite.displayHeight * (spec.collisionHeight / spec.baseHeight);
-        return new Phaser.Geom.Rectangle(entity.sprite.x - (width / 2), entity.sprite.y - height, width, height);
-    }
-
-    getPickupBounds(entity, factor) {
-        const width = entity.sprite.displayWidth * factor;
-        const height = entity.sprite.displayHeight * factor;
-        return new Phaser.Geom.Rectangle(entity.sprite.x - (width / 2), entity.sprite.y - (height / 2), width, height);
-    }
-
-    applyPowerup(type) {
-        this.powerTimers[type] = POWERUPS[type].duration;
-        if (type === "energy") this.stamina = Math.min(100, this.stamina + 18);
-        this.pulseStage(POWERUPS[type].accent, 0.07);
-        emit("status", {
-            label: "Boost Live",
-            message: `${POWERUPS[type].label} collected for ${POWERUPS[type].duration}s.`,
-            tone: POWERUPS[type].tone
-        });
-    }
-
-    handleObstacleHit(spec) {
         if (this.powerTimers.shield > 0) {
             this.powerTimers.shield = 0;
-            this.cameras.main.flash(120, 126, 183, 255, false);
-            this.spawnImpactRing(this.playerX, this.player.y + 12, 0x7eb7ff, {
-                width: 110,
-                height: 54,
-                alpha: 0.34,
-                depth: 6.4
-            });
-            emit("status", { label: "Shield Break", message: "Shield absorbed the impact.", tone: "boost" });
+            this.cameras.main.flash(140, 126, 183, 255, false);
+            this.spawnImpact(PLAYER.x, this.playerY - 80, 0x7eb7ff);
+            emit("status", { label: "Shield Break", message: "Shield absorbed the hit. Keep riding.", tone: "boost" });
             return;
         }
 
+        const spec = OBSTACLES[type];
         this.finished = true;
+        this.cameras.main.shake(180, 0.006);
+
         const results = applyRunResults({
             score: this.score,
             distance: this.distance,
@@ -1532,80 +793,260 @@ export class RunScene extends Phaser.Scene {
 
         emit("mode", { mode: "gameover" });
         emit("profile", { profile: results.profile });
-        emit("status", { label: "Run Complete", message: `${spec.label}. Results banked to your profile.`, tone: "reward" });
+        emit("status", { label: "Run Complete", message: `${spec.warning}. Results banked to your profile.`, tone: "reward" });
 
         this.scene.launch("GameOverScene", {
             score: this.score,
             distance: this.distance,
             coins: this.coins,
             biome: BIOMES[this.currentBiomeIndex].label,
-            phase: this.getSurvivalPhaseLabel(),
+            phase: PHASES[this.phaseIndex].label,
             startBiomeId: this.startBiomeId,
+            reason: spec.action === "duck" ? "Duck branches before impact." : "Jump ground hazards before impact.",
             unlockedThisRun: results.unlockedThisRun,
             nextUnlock: results.nextUnlock
         });
         this.scene.pause();
     }
 
+    applyPowerup(type) {
+        const spec = POWERUPS[type];
+        this.powerTimers[type] = spec.duration;
+        if (type === "energy") this.stamina = Math.min(100, this.stamina + 42);
+        if (type === "shield") this.cameras.main.flash(120, 126, 183, 255, false);
+        emit("status", {
+            label: spec.label,
+            message: type === "shield"
+                ? "Shield will absorb one failed obstacle hit."
+                : type === "rush"
+                    ? "Rush is live. Speed and scoring are boosted."
+                    : "Energy refilled boost stamina.",
+            tone: "boost"
+        });
+    }
+
+    updatePowerTimers(dt) {
+        Object.keys(this.powerTimers).forEach((key) => {
+            this.powerTimers[key] = Math.max(0, this.powerTimers[key] - dt);
+        });
+    }
+
+    updateTerrain(dt) {
+        this.terrainOffset += this.currentSpeed * dt;
+        this.cloudOffset += this.currentSpeed * dt * 0.1;
+        this.cloudsFar.tilePositionX = this.cloudOffset * 0.45;
+        this.cloudsNear.tilePositionX = this.cloudOffset * 0.82;
+        this.speedLines.tilePositionX = this.terrainOffset * 1.65;
+        this.speedLines.setAlpha(this.boosting ? 0.22 + (this.speedPulse * 0.22) : Math.max(0, this.speedLines.alpha - dt * 2));
+        this.drawTerrain();
+    }
+
+    drawTerrain() {
+        const biome = BIOMES[this.currentBiomeIndex];
+        const back = this.hillBack;
+        const track = this.track;
+        back.clear();
+        track.clear();
+
+        back.fillStyle(biome.canopyTint, 0.48);
+        back.beginPath();
+        back.moveTo(0, 610);
+        for (let x = 0; x <= WORLD.width + 80; x += 80) {
+            const y = 610 + Math.sin((x + this.terrainOffset * 0.18) * 0.004) * 42 + Math.sin((x + this.terrainOffset * 0.11) * 0.011) * 20;
+            back.lineTo(x, y);
+        }
+        back.lineTo(WORLD.width, WORLD.height);
+        back.lineTo(0, WORLD.height);
+        back.closePath();
+        back.fillPath();
+
+        track.fillStyle(biome.ridgeTint, 0.92);
+        track.beginPath();
+        track.moveTo(0, PLAYER.groundY + 28);
+        for (let x = 0; x <= WORLD.width + 60; x += 42) {
+            const y = this.getVisualGroundY(x);
+            track.lineTo(x, y + 28);
+        }
+        track.lineTo(WORLD.width, WORLD.height);
+        track.lineTo(0, WORLD.height);
+        track.closePath();
+        track.fillPath();
+
+        track.lineStyle(8, biome.laneTint, 0.96);
+        track.beginPath();
+        for (let x = 0; x <= WORLD.width + 60; x += 42) {
+            const y = this.getVisualGroundY(x);
+            if (x === 0) track.moveTo(x, y);
+            else track.lineTo(x, y);
+        }
+        track.strokePath();
+
+        track.lineStyle(3, 0xffffff, 0.24);
+        for (let x = -180 + (this.terrainOffset % 220); x < WORLD.width + 180; x += 220) {
+            const y = this.getVisualGroundY(x);
+            track.lineBetween(x, y - 12, x + 92, this.getVisualGroundY(x + 92) - 12);
+        }
+    }
+
+    getVisualGroundY(x) {
+        return PLAYER.groundY + Math.sin((x + this.terrainOffset) * 0.006) * 22 + Math.sin((x + this.terrainOffset) * 0.016) * 8;
+    }
+
+    updatePlayerVisual(dt) {
+        const duckScale = this.ducking ? 0.66 : 1;
+        const bob = this.grounded && !this.ducking ? Math.sin(this.time.now * 0.026) * 2.4 : 0;
+        const lean = this.boosting ? -7 : this.ducking ? -10 : this.grounded ? Math.sin(this.time.now * 0.012) * 1.8 : -4;
+
+        this.playerGroup.setPosition(PLAYER.x, this.playerY + bob);
+        this.playerGroup.setScale(1, Phaser.Math.Linear(this.playerGroup.scaleY, duckScale, 0.22));
+        this.playerGroup.setAngle(Phaser.Math.Linear(this.playerGroup.angle, lean, 0.2));
+        this.playerShadow.setPosition(PLAYER.x, PLAYER.groundY + 22);
+        this.playerShadow.setScale(this.grounded ? 1 : Phaser.Math.Clamp(1 - ((PLAYER.groundY - this.playerY) / 360), 0.42, 1), this.ducking ? 0.72 : 1);
+
+        const spin = this.currentSpeed * dt * 0.09;
+        this.wheelSprites.forEach((spoke, index) => {
+            spoke.rotation += spin + (index % 2 ? spin * 0.2 : 0);
+        });
+
+        this.dustTimer -= dt;
+        if (this.grounded && this.currentSpeed > 30 && this.dustTimer <= 0) {
+            this.dustTimer = this.boosting ? 0.045 : 0.085;
+            this.spawnDust(PLAYER.x - 116, PLAYER.groundY + 12, this.boosting ? 0xffd166 : 0xd4a15f);
+        }
+    }
+
+    updateTheme() {
+        const nextSegment = Math.floor(this.distance / RUN_CONFIG.milestoneSpacing);
+        if (nextSegment === this.themeSegment) return;
+
+        this.themeSegment = nextSegment;
+        this.nextBiomeIndex = (this.currentBiomeIndex + 1) % BIOMES.length;
+        const biome = BIOMES[this.nextBiomeIndex];
+        const bonus = 8 + (this.themeSegment * 2);
+        this.coins += bonus;
+        this.score += bonus * 30;
+
+        this.bgNext.setTexture(biome.id).setAlpha(0).setDisplaySize(WORLD.width, WORLD.height);
+        this.tweens.add({
+            targets: this.bgNext,
+            alpha: 1,
+            duration: 700,
+            ease: "Sine.Out",
+            onComplete: () => {
+                this.bg.setTexture(biome.id);
+                this.bgNext.setAlpha(0);
+                this.currentBiomeIndex = this.nextBiomeIndex;
+                this.tint.setFillStyle(biomeColor(biome), 0.06);
+            }
+        });
+
+        this.scene.launch("MilestoneScene", { biome, bonus });
+        emit("status", { label: "Climate Shift", message: `${biome.label} reached. Bonus coins added.`, tone: "reward" });
+    }
+
+    getPlayerBounds() {
+        const spec = this.ducking ? PLAYER.duckBounds : PLAYER.normalBounds;
+        return new Phaser.Geom.Rectangle(
+            PLAYER.x + spec.x,
+            this.playerY + spec.y,
+            spec.width,
+            spec.height
+        );
+    }
+
+    getObstacleBounds(entity) {
+        const spec = OBSTACLES[entity.type];
+        return new Phaser.Geom.Rectangle(
+            entity.sprite.x + spec.bounds.x,
+            entity.sprite.y + spec.bounds.y,
+            spec.bounds.width,
+            spec.bounds.height
+        );
+    }
+
+    getPickupBounds(entity) {
+        const size = entity.kind === "coin" ? 82 : 104;
+        return new Phaser.Geom.Rectangle(entity.sprite.x - (size / 2), entity.sprite.y - (size / 2), size, size);
+    }
+
+    getWarningText(nearestObstacle) {
+        if (this.elapsed < RUN_CONFIG.countdownDuration) return "Get ready";
+        if (!this.hazardsLive) return "Collect coins";
+        if (!nearestObstacle) return "Track clear";
+        const spec = OBSTACLES[nearestObstacle.type];
+        if (nearestObstacle.x < PLAYER.x + 420 && nearestObstacle.x > PLAYER.x - 80) {
+            return spec.action === "duck" ? "Duck now" : "Jump now";
+        }
+        return spec.warning;
+    }
+
     getCountdownLabel() {
-        const countdownRemaining = RUN_CONFIG.countdownDuration - this.elapsedRunTime;
-        if (countdownRemaining > 0) return `${Math.ceil(countdownRemaining)}`;
-        if (countdownRemaining > -0.42) return "GO";
+        const remaining = RUN_CONFIG.countdownDuration - this.elapsed;
+        if (remaining > 0) return `${Math.ceil(remaining)}`;
+        if (remaining > -0.42) return "GO";
         return "";
     }
 
-    getWarningText() {
-        if (!this.liveStarted) return "Brace for launch";
-        if (!this.hazardsLive) return "Opening sprint";
-
-        const activeThreats = this.threatLevels.filter((threat) => threat > 0.26).length;
-        const obstacles = this.entities
-            .filter((entity) => entity.kind === "obstacle" && entity.progress > 0.18)
-            .sort((a, b) => b.progress - a.progress);
-
-        if (!obstacles.length) return "Clear track";
-
-        const nearest = obstacles[0];
-        const spec = OBSTACLES[nearest.type];
-
-        if (nearest.lane === this.targetLane && nearest.progress > 0.46) {
-            return `Brace to ${spec.maneuver}`;
-        }
-
-        if (activeThreats >= 2 && this.threatLevels[this.targetLane] < 0.22) {
-            return "Thread the gap";
-        }
-
-        if (activeThreats >= 2) {
-            return "Pressure gate";
-        }
-
-        return `${LANE_LABELS[nearest.lane]} lane: ${spec.maneuver}`;
+    getActivePowerups() {
+        return Object.entries(this.powerTimers)
+            .filter(([, time]) => time > 0)
+            .map(([key, time]) => key === "shield" ? "Shield ready" : `${POWERUPS[key].label} ${time.toFixed(1)}s`);
     }
 
-    emitHud(force) {
+    emitHud(force = false) {
         emit("hud", {
             force,
             score: this.score,
             distance: this.distance,
             coins: this.coins,
-            speed: this.currentSpeed * 0.24,
+            speed: this.currentSpeed * 0.12,
             stamina: this.stamina,
             biome: BIOMES[this.currentBiomeIndex].label,
-            phase: this.getSurvivalPhaseLabel(),
-            warning: this.getWarningText(),
+            phase: PHASES[this.phaseIndex].label,
+            warning: this.lastWarning,
             countdown: this.getCountdownLabel(),
-            powerups: Object.entries(this.powerTimers)
-                .filter(([, time]) => time > 0)
-                .map(([key, time]) => `${POWERUPS[key].label} ${time.toFixed(1)}s`)
+            powerups: this.getActivePowerups()
+        });
+    }
+
+    spawnDust(x, y, tint) {
+        const dot = this.add.sprite(x, y, "dust-dot").setTint(tint).setDepth(7).setAlpha(0.3);
+        dot.setScale(Phaser.Math.FloatBetween(0.8, 1.8));
+        this.tweens.add({
+            targets: dot,
+            x: x - Phaser.Math.Between(24, 78),
+            y: y - Phaser.Math.Between(10, 34),
+            alpha: 0,
+            scale: dot.scale + Phaser.Math.FloatBetween(0.6, 1.2),
+            duration: Phaser.Math.Between(260, 440),
+            ease: "Quad.Out",
+            onComplete: () => dot.destroy()
+        });
+    }
+
+    spawnDustBurst(x, y, tint, count, spread) {
+        for (let index = 0; index < count; index += 1) {
+            this.time.delayedCall(index * 12, () => this.spawnDust(x + Phaser.Math.Between(-spread, spread), y, tint));
+        }
+    }
+
+    spawnImpact(x, y, tint) {
+        this.spawnDustBurst(x, y, tint, 7, 34);
+        const ring = this.add.ellipse(x, y, 40, 18).setStrokeStyle(4, tint, 0.3).setDepth(7.5);
+        this.tweens.add({
+            targets: ring,
+            width: 120,
+            height: 54,
+            alpha: 0,
+            duration: 280,
+            ease: "Quad.Out",
+            onComplete: () => ring.destroy()
         });
     }
 
     destroyEntity(entity) {
         entity.sprite.destroy();
         if (entity.glow) entity.glow.destroy();
-        if (entity.shadow) entity.shadow.destroy();
-        if (entity.warning) entity.warning.destroy();
     }
 
     getSnapshot() {
@@ -1614,7 +1055,7 @@ export class RunScene extends Phaser.Scene {
             distance: this.distance,
             coins: this.coins,
             biome: BIOMES[this.currentBiomeIndex].label,
-            phase: this.getSurvivalPhaseLabel()
+            phase: PHASES[this.phaseIndex].label
         };
     }
 }
@@ -1625,20 +1066,19 @@ export class MilestoneScene extends Phaser.Scene {
     }
 
     create(data) {
-        const card = createPanel(this, WORLD.width / 2, 152, 700, 136, {
+        const card = createPanel(this, WORLD.width / 2, 150, 710, 136, {
             fillColor: 0x05101a,
-            fillAlpha: 0.82,
+            fillAlpha: 0.86,
             strokeColor: biomeColor(data.biome),
-            strokeAlpha: 0.34
+            strokeAlpha: 0.36
         });
 
-        const title = this.add.text(WORLD.width / 2, 128, data.biome.label, {
+        const title = this.add.text(WORLD.width / 2, 124, data.biome.label, {
             fontFamily: "Teko",
             fontSize: "72px",
-            color: "#fff2d2",
-            letterSpacing: 4
+            color: "#fff2d2"
         }).setOrigin(0.5);
-        const bonus = this.add.text(WORLD.width / 2, 182, `Milestone bonus: ${data.bonus} tokens`, {
+        const bonus = this.add.text(WORLD.width / 2, 180, `Climate bonus: ${data.bonus} coins`, {
             fontFamily: "Sora",
             fontSize: "24px",
             color: "#dbe8f7"
@@ -1648,11 +1088,11 @@ export class MilestoneScene extends Phaser.Scene {
             targets: [card, title, bonus],
             y: "+=18",
             alpha: { from: 0, to: 1 },
-            duration: 260,
+            duration: 240,
             ease: "Quad.Out"
         });
 
-        this.time.delayedCall(1450, () => {
+        this.time.delayedCall(1320, () => {
             this.tweens.add({
                 targets: [card, title, bonus],
                 alpha: 0,
@@ -1680,27 +1120,26 @@ export class PauseScene extends Phaser.Scene {
         this.add.text(WORLD.width / 2, 250, "Paused", {
             fontFamily: "Teko",
             fontSize: "132px",
-            color: "#fff2d2",
-            letterSpacing: 8
+            color: "#fff2d2"
         }).setOrigin(0.5);
 
         createMiniStat(this, WORLD.width / 2 - 230, 392, "Score", formatInteger(snapshot.score));
         createMiniStat(this, WORLD.width / 2, 392, "Distance", `${formatInteger(snapshot.distance)} m`);
-        createMiniStat(this, WORLD.width / 2 + 230, 392, "Tokens", formatInteger(snapshot.coins));
+        createMiniStat(this, WORLD.width / 2 + 230, 392, "Coins", formatInteger(snapshot.coins));
 
-        this.add.text(WORLD.width / 2, 492, `Current track: ${snapshot.biome} · ${snapshot.phase}`, {
+        this.add.text(WORLD.width / 2, 492, `${snapshot.biome} - ${snapshot.phase}`, {
             fontFamily: "Sora",
             fontSize: "22px",
             color: "#d2dfef"
         }).setOrigin(0.5);
 
-        createButton(this, WORLD.width / 2, 564, "Resume Run", () => {
+        createButton(this, WORLD.width / 2, 564, "Resume Ride", () => {
             this.scene.stop();
             this.scene.resume("RunScene");
             emit("mode", { mode: "run" });
             emit("status", { label: "Run Live", message: "Ride resumed.", tone: "info" });
         });
-        createButton(this, WORLD.width / 2, 656, "Restart Run", () => {
+        createButton(this, WORLD.width / 2, 656, "Restart Ride", () => {
             this.scene.stop("RunScene");
             this.scene.stop();
             this.scene.start("RunScene", { startBiomeId: data.startBiomeId });
@@ -1716,50 +1155,54 @@ export class GameOverScene extends Phaser.Scene {
 
     create(data) {
         this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x04090f, 0.78);
-        createPanel(this, WORLD.width / 2, WORLD.height / 2, 980, 680, {
+        createPanel(this, WORLD.width / 2, WORLD.height / 2, 980, 690, {
             fillColor: 0x050f18,
-            fillAlpha: 0.88,
+            fillAlpha: 0.9,
             strokeColor: 0xffd166,
-            strokeAlpha: 0.26
+            strokeAlpha: 0.28
         });
 
-        this.add.text(WORLD.width / 2, 194, "Run Complete", {
+        this.add.text(WORLD.width / 2, 188, "Run Complete", {
             fontFamily: "Teko",
-            fontSize: "136px",
-            color: "#fff2d2",
-            letterSpacing: 6
+            fontSize: "134px",
+            color: "#fff2d2"
         }).setOrigin(0.5);
 
         createMiniStat(this, WORLD.width / 2 - 250, 332, "Score", formatInteger(data.score));
         createMiniStat(this, WORLD.width / 2, 332, "Distance", `${formatInteger(data.distance)} m`);
-        createMiniStat(this, WORLD.width / 2 + 250, 332, "Tokens", formatInteger(data.coins));
+        createMiniStat(this, WORLD.width / 2 + 250, 332, "Coins", formatInteger(data.coins));
 
         const unlockText = data.unlockedThisRun.length
             ? `New rewards: ${data.unlockedThisRun.map((unlock) => unlock.label).join(", ")}`
             : data.nextUnlock
-                ? `Next reward: ${getCatalogItem(data.nextUnlock.kind, data.nextUnlock.id).label} at ${formatInteger(data.nextUnlock.cost)} tokens`
+                ? `Next reward: ${getCatalogItem(data.nextUnlock.kind, data.nextUnlock.id).label} at ${formatInteger(data.nextUnlock.cost)} coins`
                 : "All rewards unlocked";
 
-        this.add.text(WORLD.width / 2, 462, unlockText, {
+        this.add.text(WORLD.width / 2, 456, data.reason, {
             fontFamily: "Sora",
-            fontSize: "24px",
+            fontSize: "25px",
+            color: "#ffe7c2",
+            align: "center"
+        }).setOrigin(0.5);
+        this.add.text(WORLD.width / 2, 516, unlockText, {
+            fontFamily: "Sora",
+            fontSize: "23px",
             color: "#d2dfef",
             align: "center",
             wordWrap: { width: 760 }
         }).setOrigin(0.5);
-
-        this.add.text(WORLD.width / 2, 528, `Last line: ${data.biome} · ${data.phase}. Keep it cleaner and bank the next unlock.`, {
+        this.add.text(WORLD.width / 2, 572, `${data.biome} - ${data.phase}. Replay for cleaner timing and more coins.`, {
             fontFamily: "Sora",
             fontSize: "20px",
             color: "#aebfd6",
             align: "center"
         }).setOrigin(0.5);
 
-        createButton(this, WORLD.width / 2, 612, "Race Again", () => {
+        createButton(this, WORLD.width / 2, 642, "Ride Again", () => {
             this.scene.stop("RunScene");
             this.scene.stop();
             this.scene.start("RunScene", { startBiomeId: data.startBiomeId });
         });
-        createButton(this, WORLD.width / 2, 704, "Return To Hub", () => window.location.assign("index.html"), { width: 420, variant: "secondary" });
+        createButton(this, WORLD.width / 2, 734, "Return To Hub", () => window.location.assign("index.html"), { width: 420, variant: "secondary" });
     }
 }

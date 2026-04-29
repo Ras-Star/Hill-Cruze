@@ -9,16 +9,17 @@ export const WORLD = {
 };
 
 export const RUN_CONFIG = {
-    baseSpeed: 580,
-    maxBonusSpeed: 340,
-    boostMultiplier: 1.3,
-    jumpVelocity: 1100,
-    gravity: 2500,
-    countdownDuration: 3,
-    warmupDuration: 1.15,
-    milestoneSpacing: 1400,
-    patternInterval: [900, 1320],
-    powerupInterval: [5200, 7200]
+    baseSpeed: 560,
+    maxBonusSpeed: 520,
+    boostMultiplier: 1.38,
+    jumpVelocity: 990,
+    gravity: 2750,
+    countdownDuration: 2.6,
+    warmupDuration: 2.1,
+    milestoneSpacing: 950,
+    patternInterval: [960, 1480],
+    coinInterval: [720, 1180],
+    powerupInterval: [7600, 11200]
 };
 
 export const BIOMES = [
@@ -108,16 +109,10 @@ export const SELECTED_KEYS = {
 };
 
 export const UNLOCKS = [
-    { kind: "riders", id: "river", cost: 250 },
-    { kind: "bikes", id: "sunset", cost: 425 },
-    { kind: "badges", id: "drifter", cost: 600 },
-    { kind: "backgroundPacks", id: "highlands", cost: 775 },
-    { kind: "riders", id: "forest", cost: 950 },
-    { kind: "bikes", id: "ocean", cost: 1180 },
-    { kind: "backgroundPacks", id: "dunes", cost: 1350 },
-    { kind: "badges", id: "whisperer", cost: 1525 },
-    { kind: "backgroundPacks", id: "canopy", cost: 1725 },
-    { kind: "backgroundPacks", id: "coast", cost: 1950 }
+    { kind: "backgroundPacks", id: "highlands", cost: 180 },
+    { kind: "backgroundPacks", id: "dunes", cost: 420 },
+    { kind: "backgroundPacks", id: "canopy", cost: 760 },
+    { kind: "backgroundPacks", id: "coast", cost: 1100 }
 ];
 
 export const DEFAULT_PROFILE = {

@@ -1,17 +1,14 @@
 # Sprite Sources
 
-The gameplay sprite refresh uses a mix of custom SVG artwork and free-source icon references.
+Hill Cruze now uses project-owned SVG gameplay sprites.
 
-Primary free-source references:
+- `cyclist.svg` is an original side-view cyclist drawing created directly for Hill Cruze.
+- `coin.svg`, obstacle SVGs, and powerup SVGs are original gameplay-facing compositions already kept in this repository.
+- No downloaded cyclist animation frames are shipped or required for the current build.
+
+Reference-only icon notes:
 
 - Lucide project homepage: https://lucide.dev/
 - Lucide official repository: https://github.com/lucide-icons/lucide
 
-Downloaded official reference SVGs kept in this folder:
-
-- `lucide-bike.svg`
-- `lucide-shield-plus.svg`
-- `lucide-battery-charging.svg`
-- `lucide-package.svg`
-
-Custom gameplay-facing SVGs in this folder are original compositions created for Hill Cruze, with the Lucide assets used only as style/reference input for bike and pickup direction.
+The Lucide files in this folder remain reference material for icon style and simple pickup silhouettes. They are not required for cyclist animation playback.

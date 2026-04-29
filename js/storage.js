@@ -35,6 +35,14 @@ function sanitizeProfile(rawProfile) {
     profile.longestDistance = Number(profile.longestDistance) || 0;
     profile.totalCoins = Number(profile.totalCoins) || 0;
     profile.version = DEFAULT_PROFILE.version;
+
+    for (const unlock of UNLOCKS) {
+        const unlockedKey = PROFILE_KEYS[unlock.kind];
+        if (profile.totalCoins >= unlock.cost && !profile[unlockedKey].includes(unlock.id)) {
+            profile[unlockedKey].push(unlock.id);
+        }
+    }
+
     return profile;
 }
 

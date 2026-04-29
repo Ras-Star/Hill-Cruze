@@ -1,35 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="220" height="150" viewBox="0 0 220 150" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="220" viewBox="0 0 320 220" fill="none">
   <defs>
-    <linearGradient id="frame" x1="42" y1="72" x2="168" y2="100" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#16324F"/>
-      <stop offset="1" stop-color="#0A1A2C"/>
+    <linearGradient id="frameGradient" x1="58" y1="132" x2="256" y2="174" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7CC6FE"/>
+      <stop offset=".48" stop-color="#1D3557"/>
+      <stop offset="1" stop-color="#07111A"/>
     </linearGradient>
-    <linearGradient id="accent" x1="88" y1="18" x2="130" y2="64" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFB24A"/>
-      <stop offset="1" stop-color="#F0641E"/>
+    <linearGradient id="suitGradient" x1="142" y1="52" x2="190" y2="132" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE79A"/>
+      <stop offset=".45" stop-color="#FF8F3D"/>
+      <stop offset="1" stop-color="#D9441E"/>
     </linearGradient>
-    <linearGradient id="body" x1="88" y1="42" x2="112" y2="84" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFD37A"/>
-      <stop offset="1" stop-color="#F5A623"/>
+    <linearGradient id="helmetGradient" x1="166" y1="22" x2="218" y2="68" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7C5"/>
+      <stop offset=".55" stop-color="#FFD166"/>
+      <stop offset="1" stop-color="#EF5D28"/>
     </linearGradient>
-    <filter id="shadow" x="0" y="0" width="220" height="150" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.22"/>
+    <linearGradient id="glassGradient" x1="196" y1="42" x2="224" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E6FCFF"/>
+      <stop offset="1" stop-color="#59C7E8"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10" y="-10" width="340" height="240" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000000" flood-opacity=".28"/>
     </filter>
   </defs>
-  <g filter="url(#shadow)">
-    <ellipse cx="110" cy="132" rx="74" ry="8" fill="#08111A" fill-opacity=".22"/>
-    <circle cx="58" cy="104" r="26" stroke="url(#frame)" stroke-width="10"/>
-    <circle cx="164" cy="104" r="26" stroke="url(#frame)" stroke-width="10"/>
-    <path d="M58 104L94 68L125 68L107 104H58Z" stroke="url(#frame)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M125 68L146 104H164M94 68L82 48M124 68L136 50H154" stroke="url(#frame)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M97 36C107 36 114 28 114 18C114 8 107 0 97 0C87 0 80 8 80 18C80 28 87 36 97 36Z" transform="translate(0 16)" fill="#B66E41"/>
-    <path d="M77 30C82 17 93 10 105 12C113 13 122 18 127 27L117 34C113 28 107 25 100 24C92 23 84 27 81 34L77 30Z" fill="url(#accent)"/>
-    <path d="M89 52L110 54L126 71L115 79L103 66L93 86L81 81L89 52Z" fill="url(#body)"/>
-    <path d="M106 56L126 43L133 54L117 67L106 56Z" fill="url(#accent)"/>
-    <path d="M90 85L70 103" stroke="#2E506C" stroke-width="8" stroke-linecap="round"/>
-    <path d="M111 82L136 104" stroke="#2E506C" stroke-width="8" stroke-linecap="round"/>
-    <path d="M83 48L100 46L118 56" stroke="#1D3557" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="58" cy="104" r="5" fill="#F9FBFB"/>
-    <circle cx="164" cy="104" r="5" fill="#F9FBFB"/>
+
+  <g filter="url(#softShadow)">
+    <ellipse cx="160" cy="200" rx="116" ry="14" fill="#03070D" fill-opacity=".3"/>
+
+    <g stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="76" cy="166" r="38" fill="#07111A" stroke="#EAFBFF" stroke-opacity=".18" stroke-width="10"/>
+      <circle cx="242" cy="166" r="38" fill="#07111A" stroke="#EAFBFF" stroke-opacity=".18" stroke-width="10"/>
+      <circle cx="76" cy="166" r="25" stroke="#7CC6FE" stroke-opacity=".42" stroke-width="4"/>
+      <circle cx="242" cy="166" r="25" stroke="#7CC6FE" stroke-opacity=".42" stroke-width="4"/>
+      <path d="M76 166H242M76 166L132 112M132 112L168 166M168 166L242 166M132 112H202M202 112L242 166M202 112L220 92M132 112L150 90" stroke="url(#frameGradient)" stroke-width="10"/>
+      <path d="M150 90H124M212 92H238" stroke="#FFF5D1" stroke-width="8"/>
+      <circle cx="168" cy="166" r="9" fill="#FFD166"/>
+
+      <path d="M76 166L103 139M76 166L49 139M76 166L49 193M76 166L103 193M242 166L269 139M242 166L215 139M242 166L215 193M242 166L269 193" stroke="#F7FFFF" stroke-opacity=".24" stroke-width="3"/>
+      <path d="M156 166L188 144M180 171L146 145" stroke="#FFD166" stroke-width="9"/>
+    </g>
+
+    <path d="M137 78C148 55 171 49 193 57L211 89C187 93 165 91 145 82L137 78Z" fill="url(#suitGradient)"/>
+    <path d="M148 82C164 91 189 94 211 89L198 119C179 126 154 118 135 101L148 82Z" fill="#172D48"/>
+    <path d="M151 85C166 92 188 94 204 90" stroke="#FFF0B8" stroke-opacity=".55" stroke-width="6" stroke-linecap="round"/>
+
+    <path d="M197 86L224 101M194 92L220 116" stroke="#263E5A" stroke-width="10" stroke-linecap="round"/>
+    <path d="M224 101L240 93M220 116L232 96" stroke="#F7FFFF" stroke-width="6" stroke-linecap="round"/>
+    <path d="M151 103L126 139M181 118L156 166" stroke="#263E5A" stroke-width="11" stroke-linecap="round"/>
+    <path d="M126 139L103 139M156 166L180 171" stroke="#F7FFFF" stroke-width="6" stroke-linecap="round"/>
+
+    <path d="M168 47C170 31 183 20 199 22C214 24 224 36 222 51C220 67 207 78 191 76C176 74 166 62 168 47Z" fill="#A95C3E"/>
+    <path d="M163 43C170 23 184 14 202 17C219 20 229 33 229 50C213 42 191 38 163 43Z" fill="url(#helmetGradient)"/>
+    <path d="M198 42C210 41 220 44 227 49C221 58 209 61 195 57L198 42Z" fill="url(#glassGradient)"/>
+    <path d="M183 67C192 72 203 72 212 66" stroke="#713823" stroke-width="4" stroke-linecap="round" opacity=".45"/>
+
+    <path d="M42 181C58 191 93 192 112 181M209 181C226 192 261 191 278 181" stroke="#FFFFFF" stroke-opacity=".24" stroke-width="4" stroke-linecap="round"/>
   </g>
 </svg>

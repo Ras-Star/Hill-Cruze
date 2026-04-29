@@ -1,66 +1,45 @@
 # Hill Cruze - Deployment Guide
 
-## Pre-Deployment Checklist
+## Release Shape
 
-### ✅ Code Optimizations Applied
-- [x] Fixed viewport scrolling - screens are now locked to viewport
-- [x] Enhanced color scheme with vibrant colors (gold, cyan, bright oranges)
-- [x] Improved HUD clarity and visibility
-- [x] Optimized Phaser render settings for better performance
-- [x] Added mobile landscape enforcement with fallback message
-- [x] Reduced hub visual clutter
-- [x] Enhanced rewards/progression display with visual feedback
-- [x] Upgraded font sizes and contrast throughout
+Hill Cruze is now a Dino-style side-scrolling cyclist game. Deploy it as a static browser app with `index.html` as the hub and `game.html` as the Phaser gameplay page.
 
-### 📊 Visual Improvements
-1. **Color Scheme Enhancement**
-   - Gold (#ffd700) instead of muted sand
-   - Bright cyan (#00d4ff) for coast
-   - Vibrant orange (#ff6b35) for ember
-   - Bright green (#4ecca3) for canopy
-   - Updated danger red (#ff4757)
+## Required Stack
 
-2. **HUD Clarity**
-   - Larger, bolder numbers with golden color
-   - Better contrast on all panels
-   - Enhanced shadows and depth
-   - More prominent status messages
+- Phaser 3 is loaded on `game.html` and runs the game scenes.
+- Bootstrap 5 and Bootstrap Icons are loaded on the hub and game shell for responsive layout, buttons, and iconography.
+- Local SVG and WebP assets are served from `assets/`.
+- Progress is stored in browser `localStorage`.
 
-3. **Mobile Experience**
-   - Landscape enforcement for small screens
-   - Improved touch controls visibility
-   - Viewport fit for notches and safe areas
+## Local Smoke Test
 
-### 🎮 Performance Optimizations
-- Disabled antialiasing for better frame rate
-- Enabled GPU high-performance mode
-- Added premultiplied alpha for faster rendering
-- Disabled unnecessary physics
-- Optimized Phaser render pipeline
-
-### 🌐 Deployment Options
-
-#### Option A: Static Web Host (Recommended for Quick Deploy)
-Suitable for: Vercel, Netlify, GitHub Pages, AWS S3, Azure Static Web Apps
-
-**Steps:**
-1. Copy entire project folder to your hosting platform
-2. Set index.html as entry point
-3. Ensure all asset paths are correct
-4. Test on multiple devices
-
-**Expected File Structure:**
+```bash
+npm install
+npm start
 ```
+
+Open:
+
+```text
+http://localhost:8080/
+http://localhost:8080/game.html
+```
+
+## Static Hosting
+
+Suitable hosts include Vercel, Netlify, GitHub Pages, S3 static hosting, and Azure Static Web Apps.
+
+Deploy the full project folder and keep relative paths intact:
+
+```text
 /
 ├── index.html
 ├── game.html
-├── instructions.html
 ├── style.css
 ├── package.json
 ├── assets/
 │   ├── backgrounds/
-│   ├── sprites/
-│   └── audio/
+│   └── sprites/
 ├── js/
 │   ├── config.js
 │   ├── storage.js
@@ -71,85 +50,23 @@ Suitable for: Vercel, Netlify, GitHub Pages, AWS S3, Azure Static Web Apps
 └── tools/
 ```
 
-#### Option B: Docker Deployment (Production-Grade)
-Add a Dockerfile for containerization:
+## Tester Checklist
 
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package.json .
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
-```
+- Load `index.html` and verify best score, distance, coins, rewards, and launch CTA.
+- Launch `game.html` and verify loader, Phaser tutorial menu, run, pause, restart, hub return, and game over.
+- Test keyboard controls: jump, duck, boost, pause.
+- Test touch controls: Jump, Duck, Boost.
+- Verify collisions: jump clears rocks and crates; duck clears branches; wrong timing ends the run unless shield is active.
+- Verify rewards: coins update immediately, powerups activate, final coins persist.
+- Verify climate changes: scenery shifts without changing obstacle rules.
+- Test desktop, tablet, and phone viewport sizes.
 
-### 🧪 Local Testing Before Deploy
+## Known Notes
 
-```bash
-# Start local server
-npm start
+- Audio is not implemented yet.
+- No cloud sync or leaderboard exists yet.
+- The current cyclist is a project-owned SVG, documented in `assets/sprites/SOURCES.md`.
 
-# Test URLs:
-# - http://localhost:3000/ (landing hub)
-# - http://localhost:3000/game.html (gameplay)
-# - http://localhost:3000/instructions.html (instructions)
-```
+## Deployment Status
 
-### ✔️ Pre-Launch Testing Checklist
-
-- [ ] Load index.html - verify hub displays without scrolling
-- [ ] Load game.html - verify canvas renders at 1920x1080
-- [ ] Test on mobile (portrait) - should show landscape reminder
-- [ ] Test on mobile (landscape) - should run without scrolling
-- [ ] Verify HUD numbers are visible and readable
-- [ ] Check progression rail displays correctly
-- [ ] Test keyboard controls (Arrow keys, Space)
-- [ ] Test mobile touch controls (visible and responsive)
-- [ ] Verify loader progress bar works
-- [ ] Check all asset paths load correctly
-- [ ] Verify localStorage persistence works
-- [ ] Test transition between hub and game
-
-### 🚀 Known Limitations & Future Improvements
-
-**Current Release (v1.0):**
-- Audio assets folder is empty (ready for future integration)
-- Mobile portrait shows rotation reminder overlay
-- Background assets load on-demand during preload
-
-**Future Enhancements:**
-- Add sound effects and background music
-- Implement more biome backgrounds
-- Add advanced graphics settings
-- Cloud save functionality
-- Leaderboard integration
-
-### 📱 Browser Support
-
-- Chrome/Edge (latest) ✅
-- Firefox (latest) ✅
-- Safari (iOS 14+) ✅
-- Opera (latest) ✅
-
-### 🔒 Security Notes
-
-- All assets are bundled locally
-- No external API calls (except Google Fonts)
-- localStorage used for client-side persistence only
-- No sensitive data stored
-
-### 📞 Support
-
-If issues arise during deployment:
-1. Check console for JavaScript errors
-2. Verify all asset paths are accessible
-3. Ensure viewport meta tags are present
-4. Test with browser dev tools active
-5. Check network tab for missing resources
-
----
-
-## Deployment Status: 🟢 Ready for Production
-
-Last updated: 2026-04-29
+Ready for tester deployment.

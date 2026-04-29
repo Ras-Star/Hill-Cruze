@@ -1,64 +1,57 @@
 # Hill Cruze
 
-Hill Cruze is a browser-based survival cycling game built around a Phaser 3 run loop with a lightweight HTML shell for staging, HUD framing, and mobile controls. The current direction is "motorsport safari": fast, high-contrast, biome-driven, and survival-focused instead of app-like or Bootstrap-heavy.
+Hill Cruze is a browser-based endless cyclist game inspired by the Google Dino runner. The player rides a fixed side-view cyclist across a scrolling hilly track, jumps ground hazards, ducks high hazards, collects coins, boosts with stamina, and pushes through climate-themed scenery changes.
 
-## Stack And How It Is Used
+## Stack
 
 - `Phaser 3`
-  Used for the actual game. Phaser owns the loading flow, background rendering, track drawing, player motion, obstacle and pickup spawning, collision detection, survival pacing, biome transitions, and in-canvas overlay scenes such as menu, pause, milestone, and game over.
+  Phaser is the game engine. It owns the loader, tutorial/menu scene, side-scroller run loop, hilly terrain drawing, cyclist motion, jump/duck/boost state, obstacle and coin spawning, collision checks, scoring, climate transitions, pause, milestone, and game-over scenes.
 
 - `Bootstrap 5`
-  Used as a layout helper, not as the visual identity of the game. Bootstrap provides containers, spacing utilities, responsive helpers, and Bootstrap Icons, while the buttons, chips, panels, HUD cards, loaders, and mobile controls are styled by the project's own CSS.
+  Bootstrap is the page shell and UI layer. It provides the responsive hub layout, game-page framing, grid/container utilities, buttons, and Bootstrap Icons. The visual identity, HUD, touch controls, panels, chips, loader, and progression cards are styled in `style.css`.
 
 - `Native ES modules`
-  Used to keep the runtime split into clear browser-side modules. `js/config.js` defines game data and tuning, `js/storage.js` handles persistence, `js/landing.js` drives the hub page, and `js/game/main.js` plus `js/game/scenes.js` boot and run the Phaser experience.
-
-- `Node.js local dev server`
-  Used through `tools/serve.mjs` to serve the project locally so browser ES modules, assets, and page-to-page navigation work correctly during development.
-
-- `Sharp`
-  Used only in the asset pipeline. `tools/fetch-backgrounds.mjs` uses Sharp to convert curated background references into optimized local WebP files for the biome system.
+  Runtime code is split across `js/config.js`, `js/storage.js`, `js/landing.js`, `js/game/main.js`, and `js/game/scenes.js`.
 
 - `localStorage`
-  Used for player persistence under the `hillCruzeProfileV2` key. The stored profile keeps best score, longest distance, total tokens, unlocked cosmetics, and the currently selected rider, bike, badge, and background pack.
+  Player progress is stored under `hillCruzeProfileV2`: best score, longest distance, total coins, unlocked climate packs, and the selected opening climate.
 
-## Runtime Architecture
+## Game Flow
 
-- `index.html`
-  The staging hub. This page shows progression, lets the player pick unlocked cosmetics, previews the selected biome pack, and launches the run.
+1. Open `index.html` to view best score, distance, total coins, rewards, and the selected climate pack.
+2. Launch `game.html`.
+3. Read the Phaser tutorial menu.
+4. Start the run, survive hazards, collect coins, and use boost stamina.
+5. Pause, restart, return to hub, or bank results on game over.
 
-- `game.html`
-  The gameplay shell. This page hosts the Phaser canvas, the slim HUD frame, the loader overlay, the status strip, and the mobile touch controls.
+## Controls
 
-- `js/game/scenes.js`
-  The gameplay core. This file contains the boot/preload scenes plus the survival runner itself, including lane logic, hazards, rewards, warning telegraphs, and biome progression.
+Desktop:
 
-- `js/game/main.js`
-  The browser bridge between DOM and Phaser. It initializes the game, binds keyboard and touch input, listens to `hill-cruze:*` events, and updates the HUD and loader state.
+- `Space / Up / W` - jump rocks, crates, and coin arcs
+- `Down / S` - duck branches
+- `Shift` - boost while stamina lasts
+- `Esc` - pause or resume
 
-- `js/landing.js`
-  The hub controller. It renders the card-based loadout options and progression rail using the same stored profile data as the game runtime.
+Mobile:
 
-## Project Structure
+- Tap the game canvas or Jump button to jump
+- Hold the canvas or use the Duck button to duck
+- Hold the Boost button to spend stamina
 
-- `assets/backgrounds/` - local biome backgrounds and source records
-- `assets/sprites/` - local SVG sprites and source notes
-- `js/config.js` - world tuning, biome catalog, cosmetic catalog, defaults, and unlock data
-- `js/storage.js` - profile reads, writes, unlock progression, and selection updates
-- `tools/serve.mjs` - local static dev server
-- `tools/fetch-backgrounds.mjs` - background download and conversion tool
+## Assets
 
-## Requirements
+Gameplay sprites are local SVGs in `assets/sprites/`. The cyclist is an original side-view SVG created for this project; no downloaded cyclist frame set is required. Sprite notes live in `assets/sprites/SOURCES.md`.
 
-- Node.js 18 or later
+Biome backgrounds are local WebP files in `assets/backgrounds/`, with source records in `assets/backgrounds/SOURCES.md` and `assets/backgrounds/sources.json`.
 
-## Installation
+## Running Locally
+
+Install dependencies:
 
 ```bash
 npm install
 ```
-
-## Running The Game
 
 Start the local server:
 
@@ -66,49 +59,20 @@ Start the local server:
 npm start
 ```
 
-Then open:
+Open:
 
 ```text
 http://localhost:8080
 ```
 
-This is the recommended way to run the project because the game depends on ES modules, local assets, and page-to-page browser loading behavior.
+Use the local server for development because the app uses ES modules, local assets, and page-to-page browser navigation.
 
-## Refreshing Background Assets
+## Project Structure
 
-Re-download and convert the curated biome backgrounds:
-
-```bash
-npm run fetch:backgrounds
-```
-
-This refreshes:
-
-- `assets/backgrounds/*.webp`
-- `assets/backgrounds/sources.json`
-
-Reference links are documented in `assets/backgrounds/SOURCES.md`, and sprite/source notes live in `assets/sprites/SOURCES.md`.
-
-## Controls
-
-Desktop:
-
-- `Left / Right` or `A / D` - move between lanes
-- `Up / W / Space` - jump low hazards
-- `Down / S` - duck branches
-- `Shift` - boost while stamina lasts
-- `Esc` - pause or resume
-
-Mobile:
-
-- Left thumb cluster - steer lanes
-- Right thumb cluster - jump, duck, and boost
-
-## Game Flow
-
-1. Open the hub on `index.html`.
-2. Pick an unlocked rider, bike, badge, and staging pack.
-3. Start a run from `game.html`.
-4. Survive hazards, collect tokens, and manage stamina.
-5. Hit biome milestones and progression unlocks.
-6. Bank the results back into the persistent profile.
+- `index.html` - Bootstrap welcome hub, rewards, progression, and launch CTA
+- `game.html` - Bootstrap game shell, HUD, loader, and touch controls
+- `js/game/scenes.js` - Phaser gameplay scenes and side-scroller loop
+- `js/game/main.js` - DOM-to-Phaser bridge, input binding, HUD updates
+- `js/config.js` - world constants, run tuning, biome catalog, unlock data
+- `js/storage.js` - localStorage profile handling and reward unlocks
+- `style.css` - custom responsive UI and game shell styling

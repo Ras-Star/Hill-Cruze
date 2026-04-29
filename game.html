@@ -23,17 +23,17 @@
                     <span class="brand-mark__icon"><i class="bi bi-bicycle"></i></span>
                     <span>
                         <strong>Hill Cruze</strong>
-                        <small>Live run shell</small>
+                        <small>Dino-style cyclist run</small>
                     </span>
                 </a>
 
                 <div class="run-profile">
-                    <span class="run-profile__label">Current loadout</span>
-                    <strong class="run-profile__summary" id="profileSummary">Ember Rider / Classic Frame / Trail Starter / Savanna Dawn</strong>
+                    <span class="run-profile__label">Current ride</span>
+                    <strong class="run-profile__summary" id="profileSummary">Savanna Dawn / Side-view cyclist / Jump-Duck-Boost</strong>
                     <div class="run-profile__chips">
-                        <span class="hc-chip hc-chip--preview" id="profileRider">Ember Rider</span>
-                        <span class="hc-chip hc-chip--preview" id="profileBike">Classic Frame</span>
-                        <span class="hc-chip hc-chip--preview" id="profileBadge">Trail Starter</span>
+                        <span class="hc-chip hc-chip--preview" id="profileRider">Side-view cyclist</span>
+                        <span class="hc-chip hc-chip--preview" id="profileBike">SVG ride</span>
+                        <span class="hc-chip hc-chip--preview" id="profileBadge">Jump / Duck / Boost</span>
                         <span class="hc-chip hc-chip--preview" id="profileBackground">Savanna Dawn</span>
                     </div>
                 </div>
@@ -79,8 +79,8 @@
                         <span>Distance</span>
                         <strong id="hudDistance">0 m</strong>
                     </div>
-                    <div class="hud-stack__item hud-stack__item--tokens">
-                        <span>Tokens</span>
+                    <div class="hud-stack__item hud-stack__item--coins">
+                        <span>Coins</span>
                         <strong id="hudCoins">0</strong>
                     </div>
                 </div>
@@ -112,7 +112,7 @@
                 <div class="hud-bottom__rail">
                     <div class="hud-meter">
                         <div class="hud-meter__label-row">
-                            <span>Stamina</span>
+                            <span>Boost</span>
                             <strong id="hudStaminaLabel">100%</strong>
                         </div>
                         <div class="stamina-meter">
@@ -121,37 +121,25 @@
                     </div>
 
                     <div class="hud-powerups">
-                        <span class="hud-powerups__label">Boosts</span>
+                        <span class="hud-powerups__label">Ride State</span>
                         <div class="powerup-strip" id="hudPowerups">
-                            <span class="hc-chip hc-chip--empty">No active boosts</span>
+                            <span class="hc-chip hc-chip--empty">No active powerups</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mobile-control-zone mobile-control-zone--left" id="mobileControls">
-                <span class="mobile-control-zone__label">Steer</span>
-                <div class="mobile-control-zone__cluster">
-                    <button class="mobile-controls__btn hc-control" data-action="left" type="button" aria-label="Move left">
-                        <i class="bi bi-arrow-left"></i>
-                    </button>
-                    <button class="mobile-controls__btn hc-control" data-action="right" type="button" aria-label="Move right">
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="mobile-control-zone mobile-control-zone--right">
-                <span class="mobile-control-zone__label">Actions</span>
+            <div class="mobile-control-zone mobile-control-zone--runner" id="mobileControls">
+                <span class="mobile-control-zone__label">Ride Controls</span>
                 <div class="mobile-control-zone__cluster mobile-control-zone__cluster--actions">
                     <button class="mobile-controls__btn hc-control" data-action="jump" type="button" aria-label="Jump">
                         <i class="bi bi-arrow-up"></i>
                     </button>
-                    <button class="mobile-controls__btn mobile-controls__btn--accent hc-control" data-action="boost" type="button" aria-label="Boost">
-                        <i class="bi bi-lightning-charge-fill"></i>
-                    </button>
                     <button class="mobile-controls__btn hc-control" data-action="duck" type="button" aria-label="Duck">
                         <i class="bi bi-arrow-down"></i>
+                    </button>
+                    <button class="mobile-controls__btn mobile-controls__btn--accent hc-control" data-action="boost" type="button" aria-label="Boost">
+                        <i class="bi bi-lightning-charge-fill"></i>
                     </button>
                 </div>
             </div>

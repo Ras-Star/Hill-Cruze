@@ -22,11 +22,11 @@
                     <span class="brand-mark__icon"><i class="bi bi-bicycle"></i></span>
                     <span>
                         <strong>Hill Cruze</strong>
-                        <small>Hybrid arcade downhill staging</small>
+                        <small>Dino-style cyclist arcade</small>
                     </span>
                 </a>
                 <div class="stage-topbar__actions">
-                    <a class="hc-chip hc-chip--muted text-decoration-none" href="#ride-loadout">Tune Loadout</a>
+                    <a class="hc-chip hc-chip--muted text-decoration-none" href="#ride-loadout">Theme Garage</a>
                     <a class="hc-button hc-button--primary" href="game.html">
                         <i class="bi bi-lightning-charge-fill me-2"></i>Start Ride
                     </a>
@@ -37,11 +37,11 @@
     <main class="container pb-5">
         <section class="stage-hero hc-panel hc-panel--hero">
             <div class="stage-hero__copy">
-                <p class="eyebrow">Hybrid Arcade Endless Rider</p>
-                <h1>Ride hard. Read the line. Own the biome.</h1>
+                <p class="eyebrow">Dino-Style Endless Cyclist</p>
+                <h1>Jump clean. Duck low. Chase the next climate.</h1>
                 <p class="hero-lead">
-                    Hill Cruze now stages every run like a race-day launch: sharper HUD thinking, stronger pacing,
-                    bold biome mood, and a faster route from your loadout to the live track.
+                    One hilly track, one clear rule set: jump rocks and crates, duck branches, collect coins,
+                    boost through open ground, and ride as the scenery shifts around you.
                 </p>
                 <div class="hero-actions">
                     <a class="hc-button hc-button--primary hc-button--lg" href="game.html">
@@ -61,7 +61,7 @@
                         <strong id="longestDistance">0 m</strong>
                     </article>
                     <article class="metric-card hc-stat">
-                        <span>Total Tokens</span>
+                        <span>Total Coins</span>
                         <strong id="totalCoins">0</strong>
                     </article>
                 </div>
@@ -72,7 +72,7 @@
                     <div class="hero-preview__overlay">
                         <div class="hero-preview__meta">
                             <p class="eyebrow mb-1">Staging Pack</p>
-                            <span id="selectedBadge">Trail Starter</span>
+                            <span id="selectedBadge">Opening climate</span>
                         </div>
                         <h2 id="selectedBackgroundLabel">Savanna Dawn</h2>
                         <p class="hero-preview__copy">
@@ -81,15 +81,15 @@
                         </p>
                     </div>
                     <div class="hero-preview__chips">
-                        <span class="hc-chip hc-chip--preview" id="selectedRider">Ember Rider</span>
-                        <span class="hc-chip hc-chip--preview" id="selectedBike">Classic Frame</span>
-                        <span class="hc-chip hc-chip--preview" id="nextUnlock">Next reward: River Rider</span>
+                        <span class="hc-chip hc-chip--preview" id="selectedRider">Jump / Duck / Boost</span>
+                        <span class="hc-chip hc-chip--preview" id="selectedBike">Coins unlock climates</span>
+                        <span class="hc-chip hc-chip--preview" id="nextUnlock">Next climate: Highland Redline</span>
                     </div>
                 </div>
                 <div class="hero-preview__footer">
                     <div>
                         <span>Current route</span>
-                        <strong>Three lanes, live boosts, escalating biomes</strong>
+                        <strong>One hilly track, clear dodges, escalating climates</strong>
                     </div>
                     <a class="link-arrow text-decoration-none" href="#progressionRail">
                         Track Rewards <i class="bi bi-arrow-right"></i>
@@ -102,11 +102,11 @@
             <div class="stage-card hc-panel">
                 <div class="section-heading">
                     <div>
-                        <p class="eyebrow">Loadout Garage</p>
-                        <h2 class="section-title">Choose your unlocked setup</h2>
+                        <p class="eyebrow">Theme Garage</p>
+                        <h2 class="section-title">Choose your unlocked ride mood</h2>
                     </div>
                     <p class="section-copy mb-0">
-                        Cards update the same stored profile data as before, but keep the pre-run flow fast and visual.
+                        The hub keeps the stored progression simple: best score, longest distance, coins, and unlocked themes.
                     </p>
                 </div>
 
@@ -114,38 +114,8 @@
                     <section class="loadout-group">
                         <div class="loadout-group__head">
                             <div>
-                                <span class="field-label">Rider Skin</span>
-                                <p class="loadout-copy mb-0">Accent energy and rider identity for the run intro.</p>
-                            </div>
-                        </div>
-                        <div class="loadout-grid" id="riderOptions"></div>
-                    </section>
-
-                    <section class="loadout-group">
-                        <div class="loadout-group__head">
-                            <div>
-                                <span class="field-label">Bike Frame</span>
-                                <p class="loadout-copy mb-0">Keep the chassis sharp before you hit the course.</p>
-                            </div>
-                        </div>
-                        <div class="loadout-grid" id="bikeOptions"></div>
-                    </section>
-
-                    <section class="loadout-group">
-                        <div class="loadout-group__head">
-                            <div>
-                                <span class="field-label">Badge Title</span>
-                                <p class="loadout-copy mb-0">Broadcast your progression across every menu and finish.</p>
-                            </div>
-                        </div>
-                        <div class="loadout-grid" id="badgeOptions"></div>
-                    </section>
-
-                    <section class="loadout-group">
-                        <div class="loadout-group__head">
-                            <div>
-                                <span class="field-label">Hub Background Pack</span>
-                                <p class="loadout-copy mb-0">Pick the biome mood that stages your next run.</p>
+                                <span class="field-label">Climate Pack</span>
+                                <p class="loadout-copy mb-0">Pick the opening climate. Runs continue shifting through the full route.</p>
                             </div>
                         </div>
                         <div class="loadout-grid loadout-grid--packs" id="backgroundOptions"></div>
@@ -162,16 +132,16 @@
                         </div>
                         <div class="progress-focus">
                             <div class="progress-focus__item hc-stat">
-                                <span>💰 Tokens</span>
+                                <span>Coins</span>
                                 <strong id="totalCoinsFocus">0</strong>
                             </div>
                             <div class="progress-focus__item hc-stat">
-                                <span>🎯 Current Pack</span>
+                                <span>Current Pack</span>
                                 <strong id="selectedBackgroundSummary">Savanna Dawn</strong>
                             </div>
                         </div>
                     </div>
-                    <p class="progression-hint">Unlock rewards by banking more tokens in each run.</p>
+                    <p class="progression-hint">Unlock rewards by banking more coins in each run.</p>
                     <div class="unlock-rail mt-4" id="unlockRoadmap"></div>
                 </section>
 
@@ -185,13 +155,13 @@
                     <div class="quick-guide mt-4">
                         <article class="guide-card">
                             <span class="guide-card__icon"><i class="bi bi-arrows-angle-expand"></i></span>
-                            <h3>Hold the lane</h3>
-                            <p>Left and right commit your line. Hazards are now truthful to the lanes you can see.</p>
+                            <h3>Hold the track</h3>
+                            <p>The cyclist stays on one hilly line. Your job is timing, not lane steering.</p>
                         </article>
                         <article class="guide-card">
                             <span class="guide-card__icon"><i class="bi bi-arrow-up-square"></i></span>
                             <h3>Jump or duck</h3>
-                            <p>Low rocks and crates reward jumps, while branches read as duck-or-swap pressure.</p>
+                            <p>Jump rocks and crates. Duck branches before they reach the cyclist.</p>
                         </article>
                         <article class="guide-card">
                             <span class="guide-card__icon"><i class="bi bi-lightning-charge"></i></span>
@@ -210,7 +180,7 @@
                     <h2 class="section-title">From staging to finish</h2>
                 </div>
                 <a class="hc-button hc-button--ghost" href="game.html">
-                    <i class="bi bi-trophy me-2"></i>Race For More Tokens
+                    <i class="bi bi-trophy me-2"></i>Race For More Coins
                 </a>
             </div>
 
@@ -218,17 +188,17 @@
                 <article class="flow-card">
                     <span>01</span>
                     <h3>Stage the run</h3>
-                    <p>Pick a rider, frame, badge, and opening pack without breaking your launch momentum.</p>
+                    <p>Pick an opening climate and keep your progression visible before the run starts.</p>
                 </article>
                 <article class="flow-card">
                     <span>02</span>
-                    <h3>Survive the lane mix</h3>
-                    <p>Build distance through sharp reads, quick swaps, and aggressive stamina management.</p>
+                    <h3>Survive the timing mix</h3>
+                    <p>Build distance through clean jumps, low ducks, coin pickups, and smart stamina use.</p>
                 </article>
                 <article class="flow-card">
                     <span>03</span>
                     <h3>Hit milestones</h3>
-                    <p>Biome changes and token bonuses keep the course escalating instead of staying static.</p>
+                    <p>Climate changes and coin bonuses keep the course escalating instead of staying static.</p>
                 </article>
                 <article class="flow-card">
                     <span>04</span>

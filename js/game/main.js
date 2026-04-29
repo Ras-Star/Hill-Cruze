@@ -1,4 +1,4 @@
-import { WORLD, formatInteger, getBiome, getCatalogItem } from "../config.js";
+import { WORLD, formatInteger, getBiome } from "../config.js";
 import { getProfile } from "../storage.js";
 import {
     BootScene,
@@ -44,27 +44,27 @@ class InputController {
 let gameInstance = null;
 
 function updateProfilePanel(profile) {
-    const rider = getCatalogItem("riders", profile.selectedRider).label;
-    const bike = getCatalogItem("bikes", profile.selectedBike).label;
-    const badge = getCatalogItem("badges", profile.selectedBadge).label;
     const background = getBiome(profile.selectedBackgroundPack).label;
 
-    document.getElementById("profileRider").textContent = rider;
-    document.getElementById("profileBike").textContent = bike;
-    document.getElementById("profileBadge").textContent = badge;
+    document.getElementById("profileRider").textContent = "Side-view cyclist";
+    document.getElementById("profileBike").textContent = "SVG ride";
+    document.getElementById("profileBadge").textContent = "Jump / Duck / Boost";
     document.getElementById("profileBackground").textContent = background;
-    document.getElementById("profileSummary").textContent = `${rider} / ${bike} / ${badge} / ${background}`;
+    document.getElementById("profileSummary").textContent = `${background} / Side-view cyclist / Jump-Duck-Boost`;
 }
 
 function updateHud(detail) {
+    const stamina = Phaser.Math.Clamp(Number(detail.stamina) || 0, 0, 100);
+    const activePowerups = Array.isArray(detail.powerups) ? detail.powerups : [];
+
     document.getElementById("hudScore").textContent = formatInteger(detail.score);
     document.getElementById("hudDistance").textContent = `${formatInteger(detail.distance)} m`;
     document.getElementById("hudCoins").textContent = formatInteger(detail.coins);
     document.getElementById("hudSpeed").textContent = `${formatInteger(detail.speed)} km/h`;
     document.getElementById("hudBiome").textContent = detail.phase || detail.biome;
     document.getElementById("hudWarning").textContent = detail.warning || "Track clear";
-    document.getElementById("hudStaminaLabel").textContent = `${Math.round(detail.stamina)}%`;
-    document.getElementById("hudStaminaFill").style.width = `${detail.stamina}%`;
+    document.getElementById("hudStaminaLabel").textContent = `${Math.round(stamina)}%`;
+    document.getElementById("hudStaminaFill").style.width = `${stamina}%`;
     document.getElementById("hudCountdown").textContent = detail.countdown || "";
     const biomeCardLabel = document.getElementById("hudBiomeLabel");
     if (biomeCardLabel) {
@@ -73,7 +73,7 @@ function updateHud(detail) {
     const warningCard = document.getElementById("hudWarning");
     if (warningCard) {
         const warningText = detail.warning || "Track clear";
-        const isDanger = /jump|duck|hot|find the lane|hold the gap|thread|pressure|brace/i.test(warningText);
+        const isDanger = /jump|duck|hazard|branch|rock|crate|impact|pressure|redline/i.test(warningText);
         warningCard.dataset.state = isDanger ? "danger" : "clear";
         const gameStage = document.querySelector(".game-stage");
         if (gameStage) {
@@ -83,10 +83,10 @@ function updateHud(detail) {
 
     const container = document.getElementById("hudPowerups");
     container.innerHTML = "";
-    if (!detail.powerups.length) {
-        container.innerHTML = `<span class="hc-chip hc-chip--empty">No active boosts</span>`;
+    if (!activePowerups.length) {
+        container.innerHTML = `<span class="hc-chip hc-chip--empty">No active powerups</span>`;
     } else {
-        detail.powerups.forEach((powerup) => {
+        activePowerups.forEach((powerup) => {
             const pill = document.createElement("span");
             pill.className = "hc-chip hc-chip--powerup";
             pill.textContent = powerup;
@@ -148,10 +148,6 @@ function updatePauseButton(mode) {
 
 function bindKeyboard(controller) {
     const map = {
-        ArrowLeft: "left",
-        KeyA: "left",
-        ArrowRight: "right",
-        KeyD: "right",
         ArrowUp: "jump",
         KeyW: "jump",
         Space: "jump",
