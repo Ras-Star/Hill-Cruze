@@ -248,20 +248,27 @@ async function initializeGame() {
         height: WORLD.height,
         backgroundColor: "#08111a",
         render: {
-            antialias: true,
+            antialias: false,
             powerPreference: "high-performance",
-            pixelArt: false,
-            roundPixels: true
+            pixelArt: true,
+            roundPixels: true,
+            clearBeforeRender: true,
+            premultipliedAlpha: true
         },
         fps: {
             target: 60,
-            smoothStep: true
+            smoothStep: true,
+            forceSetTimeOut: true
         },
         scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH,
             width: WORLD.width,
-            height: WORLD.height
+            height: WORLD.height,
+            expandParent: false
+        },
+        physics: {
+            default: false
         },
         scene: [BootScene, PreloadScene, MenuScene, RunScene, MilestoneScene, PauseScene, GameOverScene]
     });
