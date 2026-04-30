@@ -1,101 +1,108 @@
 import {
+    BIOMES,
     COSMETICS,
     PROFILE_KEYS,
-    SELECTED_KEYS,
     UNLOCKS,
     formatInteger,
-    getBiome,
     getCatalogItem
 } from "./config.js";
-import { getNextUnlock, getProfile, updateSelection } from "./storage.js";
+import { getNextUnlock, getProfile, getUnlockProgress, updateSelection } from "./storage.js";
 
-function getUnlockCost(kind, id) {
-    return UNLOCKS.find((unlock) => unlock.kind === kind && unlock.id === id)?.cost || null;
+function colorNumberToCss(value) {
+    return `#${value.toString(16).padStart(6, "0")}`;
 }
 
-function createClimateCard(item, profile) {
-    const kind = "backgroundPacks";
-    const biome = getBiome(item.id);
-    const button = document.createElement("button");
-    const unlocked = profile[PROFILE_KEYS[kind]].includes(item.id);
-    const selected = profile[SELECTED_KEYS[kind]] === item.id;
-    const unlockCost = getUnlockCost(kind, item.id);
-
-    button.type = "button";
-    button.className = `loadout-option${selected ? " is-selected" : ""}${unlocked ? "" : " is-locked"} loadout-option--pack`;
-    button.dataset.kind = kind;
-    button.dataset.id = item.id;
-    button.disabled = !unlocked;
-    button.style.setProperty("--option-accent", biome.accent);
-    button.style.backgroundImage =
-        `linear-gradient(180deg, rgba(5, 11, 17, 0.2), rgba(5, 11, 17, 0.84)), url('${biome.asset}')`;
-    button.innerHTML = `
-        <span class="loadout-option__eyebrow">${unlocked ? "Climate ready" : `Unlock at ${formatInteger(unlockCost)}`}</span>
-        <strong>${biome.label}</strong>
-        <span class="loadout-option__meta">${biome.summary}</span>
-    `;
-
-    button.addEventListener("click", () => {
-        updateSelection(kind, item.id);
-        refreshDashboard();
-    });
-
-    return button;
+function getProfileBiome(profile) {
+    const index = Math.floor((profile.totalDistance / 2200) + (profile.totalRuns / 3)) % BIOMES.length;
+    return BIOMES[index] || BIOMES[0];
 }
 
-function renderClimateOptions(container, profile) {
-    container.innerHTML = "";
-    COSMETICS.backgroundPacks.forEach((item) => {
-        container.appendChild(createClimateCard(item, profile));
-    });
+function applyBiomeSurface(element, biome) {
+    if (!element) return;
+    element.style.setProperty("--option-accent", biome.accent);
+    element.style.backgroundImage = [
+        `radial-gradient(circle at 20% 18%, ${biome.accent}55, transparent 34%)`,
+        `radial-gradient(circle at 80% 64%, ${colorNumberToCss(biome.glow)}30, transparent 30%)`,
+        "linear-gradient(180deg, rgba(5, 11, 17, 0.1), rgba(5, 11, 17, 0.86))",
+        `linear-gradient(145deg, ${colorNumberToCss(biome.skyTop)}, ${colorNumberToCss(biome.skyMid)} 48%, ${colorNumberToCss(biome.ridgeTint)})`
+    ].join(", ");
 }
 
-function renderUnlockRoadmap(container, profile) {
+function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
+
+function renderBadges(container, profile) {
+    if (!container) return;
     container.innerHTML = "";
 
-    UNLOCKS.forEach((unlock) => {
-        const unlocked = profile[PROFILE_KEYS[unlock.kind]].includes(unlock.id);
-        const card = document.createElement("article");
-        const label = getCatalogItem(unlock.kind, unlock.id).label;
-        const distanceToUnlock = Math.max(0, unlock.cost - profile.totalCoins);
-        card.className = `unlock-step${unlocked ? " is-unlocked" : ""}`;
-        card.innerHTML = `
-            <span class="unlock-step__kind">climate</span>
-            <strong>${label}</strong>
-            <span class="unlock-step__cost">${unlocked ? "Unlocked" : `${formatInteger(unlock.cost)} coins`}</span>
-            <p>${unlocked ? "Ready in the garage." : `${formatInteger(distanceToUnlock)} coins to go.`}</p>
+    COSMETICS.badges.forEach((badge) => {
+        const unlocked = profile[PROFILE_KEYS.badges].includes(badge.id);
+        const selected = profile.selectedBadge === badge.id;
+        const matchingUnlock = UNLOCKS.find((unlock) => unlock.kind === "badges" && unlock.id === badge.id);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `badge-card${unlocked ? " is-unlocked" : " is-locked"}${selected ? " is-selected" : ""}`;
+        button.disabled = !unlocked;
+        button.innerHTML = `
+            <span>${unlocked ? "Unlocked" : "Locked"}</span>
+            <strong>${badge.label}</strong>
+            <small>${badge.summary}</small>
+            ${matchingUnlock ? `<em>${formatInteger(matchingUnlock.score)} score / ${formatInteger(matchingUnlock.distance)} m</em>` : ""}
         `;
-        container.appendChild(card);
+        button.addEventListener("click", () => {
+            updateSelection("badges", badge.id);
+            refreshDashboard();
+        });
+        container.appendChild(button);
     });
 }
 
 function refreshDashboard() {
     const profile = getProfile();
     const nextUnlock = getNextUnlock(profile);
-    const selectedBiome = getBiome(profile.selectedBackgroundPack);
+    const progress = getUnlockProgress(profile, nextUnlock);
+    const activeBadge = getCatalogItem("badges", profile.selectedBadge);
+    const badgeCount = profile.unlockedBadges.length;
 
-    document.getElementById("bestScore").textContent = formatInteger(profile.bestScore);
-    document.getElementById("longestDistance").textContent = `${formatInteger(profile.longestDistance)} m`;
-    document.getElementById("totalCoins").textContent = formatInteger(profile.totalCoins);
-    document.getElementById("totalCoinsFocus").textContent = formatInteger(profile.totalCoins);
-    document.getElementById("selectedBackgroundSummary").textContent = selectedBiome.label;
+    setText("bestScore", formatInteger(profile.bestScore));
+    setText("longestDistance", `${formatInteger(profile.longestDistance)} m`);
+    setText("totalScore", formatInteger(profile.totalScore));
+    setText("totalDistance", `${formatInteger(profile.totalDistance)} m`);
+    setText("totalRuns", formatInteger(profile.totalRuns));
+    setText("totalCoins", formatInteger(profile.totalCoins));
+    setText("totalBadges", formatInteger(badgeCount));
+    setText("badgeCount", `${formatInteger(badgeCount)} unlocked`);
+    setText("activeBadge", activeBadge.label);
+    setText("nextBadge", nextUnlock ? getCatalogItem(nextUnlock.kind, nextUnlock.id).label : "All badges unlocked");
+    setText("scoreProgressLabel", nextUnlock ? `${formatInteger(profile.totalScore)} / ${formatInteger(progress.scoreGoal)}` : "Complete");
+    setText("distanceProgressLabel", nextUnlock ? `${formatInteger(profile.totalDistance)} m / ${formatInteger(progress.distanceGoal)} m` : "Complete");
 
-    document.getElementById("selectedRider").textContent = "Jump / Duck / Boost";
-    document.getElementById("selectedBike").textContent = "Coins unlock climates";
-    document.getElementById("selectedBadge").textContent = "Opening climate";
-    document.getElementById("selectedBackgroundLabel").textContent = selectedBiome.label;
-    document.getElementById("nextUnlock").textContent = nextUnlock
-        ? `Next climate: ${getCatalogItem(nextUnlock.kind, nextUnlock.id).label}`
-        : "All climates unlocked";
+    const scoreFill = document.getElementById("scoreProgressFill");
+    const distanceFill = document.getElementById("distanceProgressFill");
+    if (scoreFill) scoreFill.style.width = `${Math.round(progress.scoreRatio * 100)}%`;
+    if (distanceFill) distanceFill.style.width = `${Math.round(progress.distanceRatio * 100)}%`;
 
-    document.getElementById("profileBackdrop").style.backgroundImage =
-        `linear-gradient(180deg, rgba(5, 11, 17, 0.12), rgba(5, 11, 17, 0.88)), url('${selectedBiome.asset}')`;
+    applyBiomeSurface(document.getElementById("profileBackdrop"), getProfileBiome(profile));
+    renderBadges(document.getElementById("badgeGrid"), profile);
+}
 
-    renderClimateOptions(document.getElementById("backgroundOptions"), profile);
-    renderUnlockRoadmap(document.getElementById("unlockRoadmap"), profile);
+function bindTabs() {
+    const tabs = [...document.querySelectorAll("[data-hub-tab]")];
+    const views = [...document.querySelectorAll("[data-hub-view]")];
+
+    tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            const target = tab.dataset.hubTab;
+            tabs.forEach((button) => button.classList.toggle("is-active", button === tab));
+            views.forEach((view) => view.classList.toggle("is-active", view.dataset.hubView === target));
+        });
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    bindTabs();
     refreshDashboard();
     window.addEventListener("storage", refreshDashboard);
 });

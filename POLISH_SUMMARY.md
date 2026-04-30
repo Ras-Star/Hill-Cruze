@@ -1,31 +1,29 @@
-# Hill Cruze Gameplay Polish Summary
-
-This summary supersedes the earlier lane-runner polish notes.
+# Hill Cruze Polish Summary
 
 ## Current Direction
 
-Hill Cruze is now a Dino-style endless cyclist game:
+Hill Cruze is a fixed-screen endless cyclist game:
 
 - One hilly side-scrolling track.
-- Fixed side-view cyclist on the left.
-- Jump ground hazards: rocks and crates.
-- Duck high hazards: branches.
-- Collect coins in lines and arcs.
-- Use boost stamina on open stretches.
-- Collect shield, rush, and energy powerups.
-- Ride through climate-themed scenery changes.
+- Lean gameplay HUD with no crowded instruction panel.
+- Full-viewport game screen on desktop and mobile.
+- Automatic scene changes during the run.
+- Badge progression based on cumulative score and cumulative distance.
+- Compact hub with Ride, How, Badges, and Stats panels.
+- Clear How-to-Play panel and action sound feedback.
 
 ## What Changed
 
-- Replaced the old lane-based runner loop in `js/game/scenes.js`.
-- Added a custom project-owned side-view SVG cyclist.
-- Updated `game.html` HUD labels and touch controls for Jump, Duck, and Boost.
-- Updated `index.html` copy so the hub explains the new side-scroller clearly.
-- Updated `ReadME.md`, `DEPLOYMENT.md`, `RELEASE_NOTES.md`, and sprite source notes.
-- Removed the temporary downloaded frame scratch folder.
+- Rebuilt the game and hub pages with project-owned fixed-screen styling.
+- Removed the old selection panel and inactive background assets from the active UI.
+- Reworked `index.html` into a no-scroll hub.
+- Reduced `game.html` HUD elements for clearer gameplay.
+- Rebalanced hitboxes, jump clearance, hazard spacing, coin arcs, and early-run grace.
+- Added CC0 Kenney audio files with procedural Web Audio fallback tones for core gameplay events.
+- Updated storage rewards to unlock badges from cumulative performance.
+- Updated project docs for the current production direction.
 
 ## Verification
 
-- Node syntax checks pass for the edited JavaScript modules.
-- Local server smoke tests return `200` for `index.html`, `game.html`, the cyclist SVG, all core sprites, and biome backgrounds.
-- Playwright is not installed in this project, so browser automation was not run.
+- JavaScript syntax checks pass for the edited modules.
+- Local server smoke tests should return `200` for `index.html`, `game.html`, and core sprite assets.

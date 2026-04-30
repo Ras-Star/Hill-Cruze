@@ -1,51 +1,30 @@
-# Hill Cruze - Tester Gameplay Rebuild
+# Hill Cruze Release Notes
 
 ## Overview
 
-Hill Cruze has been rebuilt as a Dino-style endless cyclist game. The old lane-based runner has been replaced with a side-view cyclist on one scrolling hilly track.
+Hill Cruze is now a fixed-screen endless cyclist arcade game. The hub is compact, gameplay owns the full viewport, and progression is centered on cumulative score, cumulative distance, and badge unlocks.
 
-## Gameplay Changes
+## Gameplay
 
-- Fixed side-view cyclist on the left side of the screen.
-- Scrolling hilly terrain with a stable collision baseline.
-- Ground hazards, rocks and crates, are cleared by jumping.
-- High hazards, branches, are cleared by ducking.
-- Coins spawn in lines and arcs with forgiving pickup bounds.
-- Boost uses stamina and is meant for open stretches.
-- Shield, rush, and energy powerups give clear active feedback.
-- Speed ramps from score, distance, and run time.
-- Climate scenes transition during a run and award coin bonuses.
+- Fixed side-view cyclist on one scrolling hilly track.
+- Ground hazards are cleared by jumping.
+- High hazards are cleared by ducking.
+- Coins, shield, rush, and energy pickups remain part of the run loop.
+- Boost uses stamina and rewards clean timing.
+- Scene palettes change automatically from distance and run time.
+- Game-over results bank score, distance, coins, runs, and badge progress.
+- CC0 Kenney sound effects now play for jumps, coins, landings, boosts, powerups, impacts, and scene shifts, with generated fallback tones.
 
-## Controls
+## UI
 
-Desktop:
+- `index.html` is a fixed-screen hub with Ride, How, Badges, and Stats panels.
+- A How panel explains jump, duck, boost, coin, and scene-shift rules.
+- `game.html` uses a lean HUD: score, distance, speed, boost, warning, and countdown.
+- Hub and gameplay UI now use project-owned fixed-screen styling.
+- Theme selection and duplicated progression copy have been removed.
 
-- `Space / Up / W` - jump
-- `Down / S` - duck
-- `Shift` - boost
-- `Esc` - pause
+## Progression
 
-Mobile:
-
-- Tap the canvas or Jump button to jump.
-- Hold the canvas or use the Duck button to duck.
-- Hold Boost to spend stamina.
-
-## UI And Documentation
-
-- `index.html` now explains the side-scroller flow and progression.
-- `game.html` HUD labels focus on score, distance, coins, speed, climate, and boost stamina.
-- Touch controls are centered around Jump, Duck, and Boost.
-- `ReadME.md` documents how Phaser powers the game loop and how Bootstrap powers the shell/UI.
-- `assets/sprites/SOURCES.md` records that the cyclist is a project-owned SVG, with no downloaded cyclist frames shipped.
-
-## Tester Checklist
-
-- Start at `index.html`, launch `game.html`, and start from the Phaser tutorial menu.
-- Verify jump clears rocks and crates.
-- Verify duck clears branches.
-- Verify wrong timing ends the run unless shield is active.
-- Verify coins update the HUD and persist after game over.
-- Verify powerups activate and expire.
-- Verify pause, restart, hub return, and game-over flows.
-- Test desktop, tablet, and phone viewports.
+- Badges unlock from cumulative score and cumulative distance.
+- The active badge is shown in the hub.
+- Coins are still collected and tracked, but they are not the current reward gate.

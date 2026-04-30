@@ -1,4 +1,4 @@
-import { WORLD, formatInteger, getBiome } from "../config.js";
+import { WORLD, formatInteger } from "../config.js";
 import { getProfile } from "../storage.js";
 import {
     BootScene,
@@ -43,33 +43,31 @@ class InputController {
 
 let gameInstance = null;
 
-function updateProfilePanel(profile) {
-    const background = getBiome(profile.selectedBackgroundPack).label;
+function updateProfilePanel() {
+    // The gameplay header stays intentionally minimal.
+}
 
-    document.getElementById("profileRider").textContent = "Side-view cyclist";
-    document.getElementById("profileBike").textContent = "SVG ride";
-    document.getElementById("profileBadge").textContent = "Jump / Duck / Boost";
-    document.getElementById("profileBackground").textContent = background;
-    document.getElementById("profileSummary").textContent = `${background} / Side-view cyclist / Jump-Duck-Boost`;
+function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
+
+function setWidth(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.style.width = value;
 }
 
 function updateHud(detail) {
     const stamina = Phaser.Math.Clamp(Number(detail.stamina) || 0, 0, 100);
-    const activePowerups = Array.isArray(detail.powerups) ? detail.powerups : [];
 
-    document.getElementById("hudScore").textContent = formatInteger(detail.score);
-    document.getElementById("hudDistance").textContent = `${formatInteger(detail.distance)} m`;
-    document.getElementById("hudCoins").textContent = formatInteger(detail.coins);
-    document.getElementById("hudSpeed").textContent = `${formatInteger(detail.speed)} km/h`;
-    document.getElementById("hudBiome").textContent = detail.phase || detail.biome;
-    document.getElementById("hudWarning").textContent = detail.warning || "Track clear";
-    document.getElementById("hudStaminaLabel").textContent = `${Math.round(stamina)}%`;
-    document.getElementById("hudStaminaFill").style.width = `${stamina}%`;
-    document.getElementById("hudCountdown").textContent = detail.countdown || "";
-    const biomeCardLabel = document.getElementById("hudBiomeLabel");
-    if (biomeCardLabel) {
-        biomeCardLabel.textContent = detail.phase ? detail.biome : "Biome";
-    }
+    setText("hudScore", formatInteger(detail.score));
+    setText("hudDistance", `${formatInteger(detail.distance)} m`);
+    setText("hudCoins", formatInteger(detail.coins));
+    setText("hudSpeed", `${formatInteger(detail.speed)} km/h`);
+    setText("hudWarning", detail.warning || "Track clear");
+    setText("hudStaminaLabel", `${Math.round(stamina)}%`);
+    setWidth("hudStaminaFill", `${stamina}%`);
+    setText("hudCountdown", detail.countdown || "");
     const warningCard = document.getElementById("hudWarning");
     if (warningCard) {
         const warningText = detail.warning || "Track clear";
@@ -81,27 +79,10 @@ function updateHud(detail) {
         }
     }
 
-    const container = document.getElementById("hudPowerups");
-    container.innerHTML = "";
-    if (!activePowerups.length) {
-        container.innerHTML = `<span class="hc-chip hc-chip--empty">No active powerups</span>`;
-    } else {
-        activePowerups.forEach((powerup) => {
-            const pill = document.createElement("span");
-            pill.className = "hc-chip hc-chip--powerup";
-            pill.textContent = powerup;
-            container.appendChild(pill);
-        });
-    }
 }
 
-function applyStatus(detail = {}) {
-    const toast = document.getElementById("hudToast");
-    if (!toast) return;
-
-    toast.dataset.tone = detail.tone || "info";
-    document.getElementById("hudRunState").textContent = detail.label || "Course Status";
-    document.getElementById("hudStatusText").textContent = detail.message || "Course ready.";
+function applyStatus() {
+    // Status events are kept for scene coordination; the gameplay HUD stays lean.
 }
 
 function updateLoader(detail = {}) {
@@ -132,18 +113,18 @@ function updatePauseButton(mode) {
 
     if (mode === "run") {
         button.disabled = false;
-        button.innerHTML = `<i class="bi bi-pause-circle me-2"></i>Pause`;
+        button.innerHTML = `<span class="button-icon" aria-hidden="true">||</span>Pause`;
         return;
     }
 
     if (mode === "paused") {
         button.disabled = false;
-        button.innerHTML = `<i class="bi bi-play-circle me-2"></i>Resume`;
+        button.innerHTML = `<span class="button-icon" aria-hidden="true">&gt;</span>Resume`;
         return;
     }
 
     button.disabled = mode !== "run" && mode !== "paused";
-    button.innerHTML = `<i class="bi bi-pause-circle me-2"></i>Pause`;
+    button.innerHTML = `<span class="button-icon" aria-hidden="true">||</span>Pause`;
 }
 
 function bindKeyboard(controller) {
@@ -237,11 +218,15 @@ async function initializeGame() {
 
     if (gameInstance) return gameInstance;
 
+    const root = document.getElementById("phaser-root");
+    const width = Math.max(320, root?.clientWidth || window.innerWidth || WORLD.width);
+    const height = Math.max(320, root?.clientHeight || window.innerHeight || WORLD.height);
+
     gameInstance = new Phaser.Game({
         type: Phaser.AUTO,
         parent: "phaser-root",
-        width: WORLD.width,
-        height: WORLD.height,
+        width,
+        height,
         backgroundColor: "#08111a",
         render: {
             antialias: false,
@@ -257,11 +242,11 @@ async function initializeGame() {
             forceSetTimeOut: true
         },
         scale: {
-            mode: Phaser.Scale.FIT,
+            mode: Phaser.Scale.RESIZE,
             autoCenter: Phaser.Scale.CENTER_BOTH,
-            width: WORLD.width,
-            height: WORLD.height,
-            expandParent: false
+            width,
+            height,
+            expandParent: true
         },
         physics: {
             default: false

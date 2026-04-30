@@ -9,49 +9,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="game-shell" data-mode="menu">
     <div class="game-shell__bg"></div>
 
     <header class="game-header">
-        <div class="container-fluid px-3 px-lg-4 py-3">
-            <div class="game-topbar">
-                <a class="brand-mark text-decoration-none" href="index.html">
-                    <span class="brand-mark__icon"><i class="bi bi-bicycle"></i></span>
-                    <span>
-                        <strong>Hill Cruze</strong>
-                        <small>Dino-style cyclist run</small>
-                    </span>
+        <div class="game-topbar">
+            <a class="brand-mark" href="index.html">
+                <span class="brand-mark__icon">HC</span>
+                <span>
+                    <strong>Hill Cruze</strong>
+                    <small>Endless cyclist arcade</small>
+                </span>
+            </a>
+
+            <div class="game-topbar__actions">
+                <a class="hc-button hc-button--ghost hc-button--compact" href="index.html">
+                    <span class="button-icon" aria-hidden="true">H</span>Hub
                 </a>
-
-                <div class="run-profile">
-                    <span class="run-profile__label">Current ride</span>
-                    <strong class="run-profile__summary" id="profileSummary">Savanna Dawn / Side-view cyclist / Jump-Duck-Boost</strong>
-                    <div class="run-profile__chips">
-                        <span class="hc-chip hc-chip--preview" id="profileRider">Side-view cyclist</span>
-                        <span class="hc-chip hc-chip--preview" id="profileBike">SVG ride</span>
-                        <span class="hc-chip hc-chip--preview" id="profileBadge">Jump / Duck / Boost</span>
-                        <span class="hc-chip hc-chip--preview" id="profileBackground">Savanna Dawn</span>
-                    </div>
-                </div>
-
-                <div class="game-topbar__actions">
-                    <a class="hc-button hc-button--ghost hc-button--compact" href="index.html">
-                        <i class="bi bi-house-door me-2"></i>Hub
-                    </a>
-                    <button class="hc-button hc-button--primary hc-button--compact" id="pauseToggleBtn" type="button">
-                        <i class="bi bi-pause-circle me-2"></i>Pause
-                    </button>
-                </div>
+                <button class="hc-button hc-button--primary hc-button--compact" id="pauseToggleBtn" type="button">
+                    <span class="button-icon" aria-hidden="true">||</span>Pause
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="container-fluid px-3 px-lg-4 pb-4 game-main">
-        <section class="game-stage hc-panel hc-panel--game">
+    <main class="game-main">
+        <section class="game-stage">
             <div id="phaser-root" class="phaser-root"></div>
 
             <div class="game-loader hc-loader" id="gameLoader" data-state="loading" aria-live="polite">
@@ -64,7 +49,7 @@
                     </div>
                     <span class="game-loader__percent" id="gameLoaderPercent">0%</span>
                     <button class="hc-button hc-button--primary hc-button--compact game-loader__retry" id="gameLoaderRetry" type="button">
-                        <i class="bi bi-arrow-clockwise me-2"></i>Retry Load
+                        <span class="button-icon" aria-hidden="true">R</span>Retry Load
                     </button>
                 </div>
             </div>
@@ -92,20 +77,12 @@
                         <span>Speed</span>
                         <strong id="hudSpeed">0 km/h</strong>
                     </div>
-                    <div class="hud-stack__item hud-stack__item--phase">
-                        <span id="hudBiomeLabel">Biome</span>
-                        <strong id="hudBiome">Savanna Dawn</strong>
-                    </div>
                 </div>
             </div>
 
             <div class="hud-centerline">
-                <div class="hud-toast" id="hudToast" data-tone="info">
-                    <span class="hud-toast__eyebrow" id="hudRunState">Course Status</span>
-                    <strong id="hudStatusText">Loading course assets.</strong>
-                    <div class="hud-livewarning" id="hudWarning" data-state="clear">Clear track</div>
-                </div>
                 <div class="hud-countdown" id="hudCountdown"></div>
+                <div class="hud-livewarning" id="hudWarning" data-state="clear">Clear track</div>
             </div>
 
             <div class="hud-bottom">
@@ -119,27 +96,19 @@
                             <div class="stamina-meter__fill" id="hudStaminaFill"></div>
                         </div>
                     </div>
-
-                    <div class="hud-powerups">
-                        <span class="hud-powerups__label">Ride State</span>
-                        <div class="powerup-strip" id="hudPowerups">
-                            <span class="hc-chip hc-chip--empty">No active powerups</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
             <div class="mobile-control-zone mobile-control-zone--runner" id="mobileControls">
-                <span class="mobile-control-zone__label">Ride Controls</span>
                 <div class="mobile-control-zone__cluster mobile-control-zone__cluster--actions">
                     <button class="mobile-controls__btn hc-control" data-action="jump" type="button" aria-label="Jump">
-                        <i class="bi bi-arrow-up"></i>
+                        <span class="control-glyph" aria-hidden="true">UP</span>
                     </button>
                     <button class="mobile-controls__btn hc-control" data-action="duck" type="button" aria-label="Duck">
-                        <i class="bi bi-arrow-down"></i>
+                        <span class="control-glyph" aria-hidden="true">DN</span>
                     </button>
                     <button class="mobile-controls__btn mobile-controls__btn--accent hc-control" data-action="boost" type="button" aria-label="Boost">
-                        <i class="bi bi-lightning-charge-fill"></i>
+                        <span class="control-glyph" aria-hidden="true">BST</span>
                     </button>
                 </div>
             </div>
@@ -147,7 +116,6 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="js/game/main.js"></script>
 </body>
 </html>

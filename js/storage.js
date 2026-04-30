@@ -33,17 +33,26 @@ function sanitizeProfile(rawProfile) {
 
     profile.bestScore = Number(profile.bestScore) || 0;
     profile.longestDistance = Number(profile.longestDistance) || 0;
+    profile.totalScore = Math.max(Number(profile.totalScore) || 0, profile.bestScore);
+    profile.totalDistance = Math.max(Number(profile.totalDistance) || 0, profile.longestDistance);
+    profile.totalRuns = Number(profile.totalRuns) || 0;
     profile.totalCoins = Number(profile.totalCoins) || 0;
     profile.version = DEFAULT_PROFILE.version;
 
     for (const unlock of UNLOCKS) {
         const unlockedKey = PROFILE_KEYS[unlock.kind];
-        if (profile.totalCoins >= unlock.cost && !profile[unlockedKey].includes(unlock.id)) {
+        if (isUnlockMet(profile, unlock) && !profile[unlockedKey].includes(unlock.id)) {
             profile[unlockedKey].push(unlock.id);
         }
     }
 
     return profile;
+}
+
+function isUnlockMet(profile, unlock) {
+    const scoreGoal = Number(unlock.score) || 0;
+    const distanceGoal = Number(unlock.distance) || 0;
+    return profile.totalScore >= scoreGoal && profile.totalDistance >= distanceGoal;
 }
 
 export function getProfile() {
@@ -65,6 +74,27 @@ export function getNextUnlock(profile = getProfile()) {
     return UNLOCKS.find(({ kind, id }) => !profile[PROFILE_KEYS[kind]].includes(id)) || null;
 }
 
+export function getUnlockProgress(profile = getProfile(), unlock = getNextUnlock(profile)) {
+    if (!unlock) {
+        return {
+            scoreGoal: 0,
+            distanceGoal: 0,
+            scoreRatio: 1,
+            distanceRatio: 1
+        };
+    }
+
+    const scoreGoal = Number(unlock.score) || 0;
+    const distanceGoal = Number(unlock.distance) || 0;
+
+    return {
+        scoreGoal,
+        distanceGoal,
+        scoreRatio: scoreGoal ? Math.min(1, profile.totalScore / scoreGoal) : 1,
+        distanceRatio: distanceGoal ? Math.min(1, profile.totalDistance / distanceGoal) : 1
+    };
+}
+
 export function updateSelection(kind, id) {
     const profile = getProfile();
     const unlockedKey = PROFILE_KEYS[kind];
@@ -80,16 +110,22 @@ export function updateSelection(kind, id) {
 
 export function applyRunResults({ score, distance, coins }) {
     const profile = getProfile();
-    profile.bestScore = Math.max(profile.bestScore, Math.floor(score));
-    profile.longestDistance = Math.max(profile.longestDistance, Math.floor(distance));
+    const runScore = Math.max(0, Math.floor(score));
+    const runDistance = Math.max(0, Math.floor(distance));
+    profile.bestScore = Math.max(profile.bestScore, runScore);
+    profile.longestDistance = Math.max(profile.longestDistance, runDistance);
+    profile.totalScore += runScore;
+    profile.totalDistance += runDistance;
+    profile.totalRuns += 1;
     profile.totalCoins += Math.max(0, Math.floor(coins));
 
     const unlockedThisRun = [];
 
     for (const unlock of UNLOCKS) {
         const unlockedKey = PROFILE_KEYS[unlock.kind];
-        if (profile.totalCoins >= unlock.cost && !profile[unlockedKey].includes(unlock.id)) {
+        if (isUnlockMet(profile, unlock) && !profile[unlockedKey].includes(unlock.id)) {
             profile[unlockedKey].push(unlock.id);
+            if (unlock.kind === "badges") profile.selectedBadge = unlock.id;
             unlockedThisRun.push({
                 ...unlock,
                 label: getCatalogItem(unlock.kind, unlock.id).label

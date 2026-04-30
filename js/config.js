@@ -9,26 +9,29 @@ export const WORLD = {
 };
 
 export const RUN_CONFIG = {
-    baseSpeed: 560,
-    maxBonusSpeed: 520,
+    baseSpeed: 500,
+    maxBonusSpeed: 430,
     boostMultiplier: 1.38,
-    jumpVelocity: 990,
-    gravity: 2750,
+    jumpVelocity: 1120,
+    gravity: 2550,
     countdownDuration: 2.6,
-    warmupDuration: 2.1,
-    milestoneSpacing: 950,
-    patternInterval: [960, 1480],
-    coinInterval: [720, 1180],
-    powerupInterval: [7600, 11200]
+    warmupDuration: 3.6,
+    milestoneSpacing: 620,
+    patternInterval: [1350, 1900],
+    coinInterval: [650, 1050],
+    powerupInterval: [6400, 9800]
 };
 
 export const BIOMES = [
     {
         id: "savanna",
         label: "Savanna Dawn",
-        summary: "Open grassland, warm dust, and sharp sunrise contrast.",
-        asset: "assets/backgrounds/savanna.webp",
+        summary: "Open grassland, warm dust, and clear sunrise contrast.",
         accent: "#ffb347",
+        skyTop: 0x071424,
+        skyMid: 0x1f4960,
+        skyBottom: 0xd8823d,
+        glow: 0xffd166,
         laneTint: 0xb56b2f,
         ridgeTint: 0x7c4a22,
         canopyTint: 0x354f2f
@@ -37,8 +40,11 @@ export const BIOMES = [
         id: "highlands",
         label: "Highland Redline",
         summary: "Red-earth ridges and deep green highland edges.",
-        asset: "assets/backgrounds/highlands.webp",
         accent: "#ef8354",
+        skyTop: 0x081421,
+        skyMid: 0x263a52,
+        skyBottom: 0xb64f32,
+        glow: 0xef8354,
         laneTint: 0xa44a28,
         ridgeTint: 0x6a2b15,
         canopyTint: 0x3f6d40
@@ -47,8 +53,11 @@ export const BIOMES = [
         id: "dunes",
         label: "Namib Drift",
         summary: "Wide dune walls and hot, wind-cut horizon bands.",
-        asset: "assets/backgrounds/dunes.webp",
         accent: "#ffd166",
+        skyTop: 0x0b1625,
+        skyMid: 0x31516a,
+        skyBottom: 0xe0a84b,
+        glow: 0xffd166,
         laneTint: 0xa86a30,
         ridgeTint: 0x704621,
         canopyTint: 0x8a6b3d
@@ -57,8 +66,11 @@ export const BIOMES = [
         id: "canopy",
         label: "Canopy Rush",
         summary: "Lush green climbs with saturated cloud breaks.",
-        asset: "assets/backgrounds/canopy.webp",
         accent: "#78c091",
+        skyTop: 0x06151a,
+        skyMid: 0x174331,
+        skyBottom: 0x4f8760,
+        glow: 0x78c091,
         laneTint: 0x456a45,
         ridgeTint: 0x27422d,
         canopyTint: 0x173526
@@ -67,8 +79,11 @@ export const BIOMES = [
         id: "coast",
         label: "Escarpment Coast",
         summary: "Rocky cliff faces and cool ocean light at the edge.",
-        asset: "assets/backgrounds/coast.webp",
         accent: "#7cc6fe",
+        skyTop: 0x071521,
+        skyMid: 0x1f536f,
+        skyBottom: 0x79a7b8,
+        glow: 0x7cc6fe,
         laneTint: 0x4c6577,
         ridgeTint: 0x233646,
         canopyTint: 0x2f5166
@@ -76,58 +91,40 @@ export const BIOMES = [
 ];
 
 export const COSMETICS = {
-    riders: [
-        { id: "ember", label: "Ember Rider", accent: 0xff8f3d, suit: 0xf4c95d },
-        { id: "river", label: "River Rider", accent: 0x5bc0eb, suit: 0xc9f9ff },
-        { id: "forest", label: "Forest Rider", accent: 0x78c091, suit: 0xd6ffe3 }
-    ],
-    bikes: [
-        { id: "classic", label: "Classic Frame", frame: 0x1d3557, trim: 0xffffff },
-        { id: "sunset", label: "Sunset Frame", frame: 0xd96c06, trim: 0xffd166 },
-        { id: "ocean", label: "Ocean Frame", frame: 0x006d77, trim: 0xa9def9 }
-    ],
     badges: [
-        { id: "rookie", label: "Trail Starter" },
-        { id: "drifter", label: "Dune Drifter" },
-        { id: "whisperer", label: "Cliff Whisperer" }
-    ],
-    backgroundPacks: BIOMES.map(({ id, label }) => ({ id, label }))
+        { id: "rookie", label: "Trail Starter", summary: "First ride profile." },
+        { id: "steady", label: "Steady Climber", summary: "Built from clean early runs." },
+        { id: "sprinter", label: "Open Road Sprinter", summary: "Unlocked by stronger score pace." },
+        { id: "ridge", label: "Ridge Master", summary: "Distance and score are both climbing." },
+        { id: "summit", label: "Summit Chaser", summary: "Long-term mastery badge." }
+    ]
 };
 
 export const PROFILE_KEYS = {
-    riders: "unlockedRiders",
-    bikes: "unlockedBikes",
-    badges: "unlockedBadges",
-    backgroundPacks: "unlockedBackgroundPacks"
+    badges: "unlockedBadges"
 };
 
 export const SELECTED_KEYS = {
-    riders: "selectedRider",
-    bikes: "selectedBike",
-    badges: "selectedBadge",
-    backgroundPacks: "selectedBackgroundPack"
+    badges: "selectedBadge"
 };
 
 export const UNLOCKS = [
-    { kind: "backgroundPacks", id: "highlands", cost: 180 },
-    { kind: "backgroundPacks", id: "dunes", cost: 420 },
-    { kind: "backgroundPacks", id: "canopy", cost: 760 },
-    { kind: "backgroundPacks", id: "coast", cost: 1100 }
+    { kind: "badges", id: "steady", score: 4000, distance: 700 },
+    { kind: "badges", id: "sprinter", score: 14000, distance: 2200 },
+    { kind: "badges", id: "ridge", score: 36000, distance: 6200 },
+    { kind: "badges", id: "summit", score: 90000, distance: 14000 }
 ];
 
 export const DEFAULT_PROFILE = {
     version: 2,
     bestScore: 0,
     longestDistance: 0,
+    totalScore: 0,
+    totalDistance: 0,
+    totalRuns: 0,
     totalCoins: 0,
-    unlockedRiders: ["ember"],
-    unlockedBikes: ["classic"],
     unlockedBadges: ["rookie"],
-    unlockedBackgroundPacks: ["savanna"],
-    selectedRider: "ember",
-    selectedBike: "classic",
-    selectedBadge: "rookie",
-    selectedBackgroundPack: "savanna"
+    selectedBadge: "rookie"
 };
 
 export function getCatalogItem(kind, id) {
