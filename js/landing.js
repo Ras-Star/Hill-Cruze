@@ -37,19 +37,36 @@ function renderBadges(container, profile) {
     if (!container) return;
     container.innerHTML = "";
 
-    COSMETICS.badges.forEach((badge) => {
+    COSMETICS.badges.forEach((badge, index) => {
         const unlocked = profile[PROFILE_KEYS.badges].includes(badge.id);
         const selected = profile.selectedBadge === badge.id;
         const matchingUnlock = UNLOCKS.find((unlock) => unlock.kind === "badges" && unlock.id === badge.id);
+        const scoreGoal = Number(matchingUnlock?.score) || 0;
+        const distanceGoal = Number(matchingUnlock?.distance) || 0;
+        const scoreRatio = scoreGoal ? Math.min(1, profile.totalScore / scoreGoal) : 1;
+        const distanceRatio = distanceGoal ? Math.min(1, profile.totalDistance / distanceGoal) : 1;
+        const completion = unlocked ? 100 : Math.round(Math.min(scoreRatio, distanceRatio) * 100);
         const button = document.createElement("button");
         button.type = "button";
         button.className = `badge-card${unlocked ? " is-unlocked" : " is-locked"}${selected ? " is-selected" : ""}`;
         button.disabled = !unlocked;
         button.innerHTML = `
-            <span>${unlocked ? "Unlocked" : "Locked"}</span>
+            <div class="badge-card__crest" aria-hidden="true">${index + 1}</div>
+            <span>${selected ? "Equipped" : unlocked ? "Unlocked" : `${completion}% complete`}</span>
             <strong>${badge.label}</strong>
             <small>${badge.summary}</small>
-            ${matchingUnlock ? `<em>${formatInteger(matchingUnlock.score)} score / ${formatInteger(matchingUnlock.distance)} m</em>` : ""}
+            <div class="badge-card__goals">
+                <div class="badge-card__goal-row">
+                    <span>Score</span>
+                    <em>${matchingUnlock ? `${formatInteger(profile.totalScore)} / ${formatInteger(scoreGoal)}` : "Unlocked"}</em>
+                </div>
+                <div class="badge-card__bar"><i style="width: ${Math.round(scoreRatio * 100)}%"></i></div>
+                <div class="badge-card__goal-row">
+                    <span>Distance</span>
+                    <em>${matchingUnlock ? `${formatInteger(profile.totalDistance)} m / ${formatInteger(distanceGoal)} m` : "Unlocked"}</em>
+                </div>
+                <div class="badge-card__bar badge-card__bar--distance"><i style="width: ${Math.round(distanceRatio * 100)}%"></i></div>
+            </div>
         `;
         button.addEventListener("click", () => {
             updateSelection("badges", badge.id);

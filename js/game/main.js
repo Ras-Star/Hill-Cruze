@@ -42,6 +42,8 @@ class InputController {
 }
 
 let gameInstance = null;
+let audioMuted = false;
+const MUTE_STORAGE_KEY = "hillCruzeMuted";
 
 function updateProfilePanel() {
     // The gameplay header stays intentionally minimal.
@@ -55,6 +57,39 @@ function setText(id, value) {
 function setWidth(id, value) {
     const element = document.getElementById(id);
     if (element) element.style.width = value;
+}
+
+function readMutedPreference() {
+    try {
+        return localStorage.getItem(MUTE_STORAGE_KEY) === "true";
+    } catch {
+        return false;
+    }
+}
+
+function updateMuteButton() {
+    const button = document.getElementById("muteToggleBtn");
+    if (!button) return;
+
+    button.textContent = audioMuted ? "Muted" : "Sound";
+    button.setAttribute("aria-pressed", String(audioMuted));
+    button.title = audioMuted ? "Sound is muted" : "Sound is on";
+}
+
+function setAudioMuted(muted, persist = true) {
+    audioMuted = Boolean(muted);
+    window.hillCruzeMuted = audioMuted;
+
+    if (persist) {
+        try {
+            localStorage.setItem(MUTE_STORAGE_KEY, String(audioMuted));
+        } catch {
+            // Audio preference is optional; gameplay should continue without storage.
+        }
+    }
+
+    updateMuteButton();
+    window.dispatchEvent(new CustomEvent("hill-cruze:mute", { detail: { muted: audioMuted } }));
 }
 
 function updateHud(detail) {
@@ -259,6 +294,7 @@ async function initializeGame() {
 
 document.addEventListener("DOMContentLoaded", () => {
     const profile = getProfile();
+    setAudioMuted(readMutedPreference(), false);
     updateProfilePanel(profile);
     updatePauseButton("loading");
     applyStatus({ label: "Course Status", message: "Loading course assets.", tone: "info" });
@@ -277,6 +313,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("pauseToggleBtn").addEventListener("click", () => {
         if (gameInstance) togglePause(gameInstance);
+    });
+    document.getElementById("muteToggleBtn").addEventListener("click", () => {
+        setAudioMuted(!audioMuted);
     });
     document.getElementById("gameLoaderRetry").addEventListener("click", () => window.location.reload());
 

@@ -24,10 +24,19 @@
                 </span>
             </a>
 
+            <div class="game-run-meter" aria-label="Boost meter">
+                <span>Boost</span>
+                <div class="game-run-meter__track">
+                    <div class="game-run-meter__fill" id="hudStaminaFill"></div>
+                </div>
+                <strong id="hudStaminaLabel">100%</strong>
+            </div>
+
             <div class="game-topbar__actions">
                 <a class="hc-button hc-button--ghost hc-button--compact" href="index.html">
                     <span class="button-icon" aria-hidden="true">H</span>Hub
                 </a>
+                <button class="hc-button hc-button--ghost hc-button--compact" id="muteToggleBtn" type="button" aria-pressed="false">Sound</button>
                 <button class="hc-button hc-button--primary hc-button--compact" id="pauseToggleBtn" type="button">
                     <span class="button-icon" aria-hidden="true">||</span>Pause
                 </button>
@@ -85,30 +94,16 @@
                 <div class="hud-livewarning" id="hudWarning" data-state="clear">Clear track</div>
             </div>
 
-            <div class="hud-bottom">
-                <div class="hud-bottom__rail">
-                    <div class="hud-meter">
-                        <div class="hud-meter__label-row">
-                            <span>Boost</span>
-                            <strong id="hudStaminaLabel">100%</strong>
-                        </div>
-                        <div class="stamina-meter">
-                            <div class="stamina-meter__fill" id="hudStaminaFill"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="mobile-control-zone mobile-control-zone--runner" id="mobileControls">
                 <div class="mobile-control-zone__cluster mobile-control-zone__cluster--actions">
                     <button class="mobile-controls__btn hc-control" data-action="jump" type="button" aria-label="Jump">
-                        <span class="control-glyph" aria-hidden="true">UP</span>
+                        <span class="control-glyph" aria-hidden="true">Jump</span>
                     </button>
                     <button class="mobile-controls__btn hc-control" data-action="duck" type="button" aria-label="Duck">
-                        <span class="control-glyph" aria-hidden="true">DN</span>
+                        <span class="control-glyph" aria-hidden="true">Duck</span>
                     </button>
                     <button class="mobile-controls__btn mobile-controls__btn--accent hc-control" data-action="boost" type="button" aria-label="Boost">
-                        <span class="control-glyph" aria-hidden="true">BST</span>
+                        <span class="control-glyph" aria-hidden="true">Boost</span>
                     </button>
                 </div>
             </div>

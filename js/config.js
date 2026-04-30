@@ -9,16 +9,16 @@ export const WORLD = {
 };
 
 export const RUN_CONFIG = {
-    baseSpeed: 500,
-    maxBonusSpeed: 430,
+    baseSpeed: 430,
+    maxBonusSpeed: 500,
     boostMultiplier: 1.38,
     jumpVelocity: 1120,
     gravity: 2550,
     countdownDuration: 2.6,
-    warmupDuration: 3.6,
+    warmupDuration: 4.8,
     milestoneSpacing: 620,
-    patternInterval: [1350, 1900],
-    coinInterval: [650, 1050],
+    patternInterval: [1650, 2250],
+    coinInterval: [760, 1160],
     powerupInterval: [6400, 9800]
 };
 
@@ -92,11 +92,16 @@ export const BIOMES = [
 
 export const COSMETICS = {
     badges: [
-        { id: "rookie", label: "Trail Starter", summary: "First ride profile." },
-        { id: "steady", label: "Steady Climber", summary: "Built from clean early runs." },
-        { id: "sprinter", label: "Open Road Sprinter", summary: "Unlocked by stronger score pace." },
-        { id: "ridge", label: "Ridge Master", summary: "Distance and score are both climbing." },
-        { id: "summit", label: "Summit Chaser", summary: "Long-term mastery badge." }
+        { id: "rookie", label: "Trail Starter", summary: "Profile badge for beginning the ride." },
+        { id: "steady", label: "Steady Climber", summary: "Earned by building early cumulative score and distance." },
+        { id: "sprinter", label: "Open Road Sprinter", summary: "Earned by pushing total score and distance into a faster tier." },
+        { id: "ridge", label: "Ridge Master", summary: "Earned by sustaining longer runs across multiple scenes." },
+        { id: "shifter", label: "Scene Shifter", summary: "Earned by riding through repeated theme changes." },
+        { id: "summit", label: "Summit Chaser", summary: "Earned by reaching the first long-distance mastery tier." },
+        { id: "endurance", label: "Endurance Rider", summary: "Earned by stacking dependable runs over time." },
+        { id: "coinline", label: "Coin Line Hunter", summary: "Earned by keeping score growth and distance moving together." },
+        { id: "horizon", label: "Horizon Cruiser", summary: "Earned by pushing the profile deep into endless play." },
+        { id: "legend", label: "Hill Cruze Legend", summary: "Earned by reaching the highest cumulative mastery tier." }
     ]
 };
 
@@ -112,7 +117,12 @@ export const UNLOCKS = [
     { kind: "badges", id: "steady", score: 4000, distance: 700 },
     { kind: "badges", id: "sprinter", score: 14000, distance: 2200 },
     { kind: "badges", id: "ridge", score: 36000, distance: 6200 },
-    { kind: "badges", id: "summit", score: 90000, distance: 14000 }
+    { kind: "badges", id: "shifter", score: 70000, distance: 10500 },
+    { kind: "badges", id: "summit", score: 120000, distance: 18000 },
+    { kind: "badges", id: "endurance", score: 210000, distance: 32000 },
+    { kind: "badges", id: "coinline", score: 340000, distance: 52000 },
+    { kind: "badges", id: "horizon", score: 520000, distance: 80000 },
+    { kind: "badges", id: "legend", score: 780000, distance: 120000 }
 ];
 
 export const DEFAULT_PROFILE = {

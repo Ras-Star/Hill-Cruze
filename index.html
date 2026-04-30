@@ -25,13 +25,14 @@
 
         <nav class="hub-tabs" aria-label="Hub sections">
             <button class="hub-tab is-active" type="button" data-hub-tab="ride">Ride</button>
-            <button class="hub-tab" type="button" data-hub-tab="how">How</button>
+            <button class="hub-tab" type="button" data-hub-tab="guide">Guide</button>
             <button class="hub-tab" type="button" data-hub-tab="badges">Badges</button>
             <button class="hub-tab" type="button" data-hub-tab="stats">Stats</button>
+            <button class="hub-tab" type="button" data-hub-tab="about">About</button>
         </nav>
 
         <a class="hc-button hc-button--primary hub-start" href="game.html">
-            <span class="button-icon" aria-hidden="true">&gt;</span>Start
+            <span class="button-icon" aria-hidden="true">&gt;</span><span class="button-label">Start</span>
         </a>
     </header>
 
@@ -48,7 +49,7 @@
                         </div>
                     </div>
                     <a class="hc-button hc-button--primary hc-button--lg hub-hero__start" href="game.html">
-                        <span class="button-icon" aria-hidden="true">&gt;</span>Ride
+                        <span class="button-icon" aria-hidden="true">&gt;</span><span class="button-label">Ride</span>
                     </a>
                 </section>
 
@@ -92,30 +93,30 @@
             </div>
         </section>
 
-        <section class="hub-view" data-hub-view="how" aria-label="How to play">
+        <section class="hub-view" data-hub-view="guide" aria-label="Game guide">
             <div class="hub-panel hub-panel--full">
                 <div class="hub-panel__head">
-                    <span class="eyebrow">How To Play</span>
+                    <span class="eyebrow">Guide</span>
                     <strong>Clean Timing</strong>
                 </div>
                 <div class="how-grid">
                     <article class="how-card">
-                        <span class="how-card__key">UP</span>
+                        <span class="how-card__key">Jump</span>
                         <strong>Jump Ground Hazards</strong>
-                        <p>Tap, press Space, Up, or W before rocks and crates reach the front wheel.</p>
+                        <p>Tap the screen, press Space, press Arrow Up, or press W before rocks and crates reach the front wheel.</p>
                     </article>
                     <article class="how-card">
-                        <span class="how-card__key">DN</span>
+                        <span class="how-card__key">Duck</span>
                         <strong>Duck High Hazards</strong>
-                        <p>Hold Down, S, or the Duck control while branches pass overhead.</p>
+                        <p>Hold the Duck control, hold Arrow Down, or hold S while branches pass overhead.</p>
                     </article>
                     <article class="how-card">
-                        <span class="how-card__key">BST</span>
+                        <span class="how-card__key">Boost</span>
                         <strong>Boost Open Ground</strong>
                         <p>Hold Shift or Boost when the track is clear. Boost spends stamina and increases score pace.</p>
                     </article>
                     <article class="how-card">
-                        <span class="how-card__key">COIN</span>
+                        <span class="how-card__key">Coins</span>
                         <strong>Collect And Survive</strong>
                         <p>Coins add score immediately. Scene shifts happen automatically as distance and run time build.</p>
                     </article>
@@ -156,6 +157,20 @@
                         <span>Badges</span>
                         <strong id="totalBadges">1</strong>
                     </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="hub-view" data-hub-view="about" aria-label="About Hill Cruze">
+            <div class="hub-panel hub-panel--full hub-about">
+                <div class="hub-panel__head">
+                    <span class="eyebrow">About</span>
+                    <strong>A Note From Gabriel</strong>
+                </div>
+                <div class="about-note">
+                    <p>Welcome to Hill Cruze. I built this ride to feel light, quick, and inviting: a simple place to chase a cleaner run, unlock a new badge, and enjoy the rhythm of the road.</p>
+                    <p>Thank you for playing. Keep it smooth, trust your timing, and let every run carry you a little farther.</p>
+                    <strong>Gabriel</strong>
                 </div>
             </div>
         </section>

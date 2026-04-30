@@ -19,6 +19,15 @@
       <stop stop-color="#E6FCFF"/>
       <stop offset="1" stop-color="#59C7E8"/>
     </linearGradient>
+    <linearGradient id="rimGradient" x1="42" y1="126" x2="278" y2="204" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FFFF"/>
+      <stop offset=".42" stop-color="#7CC6FE"/>
+      <stop offset="1" stop-color="#21344C"/>
+    </linearGradient>
+    <radialGradient id="warmHighlight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(172 86) rotate(72) scale(82 42)">
+      <stop stop-color="#FFF7C5" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#FFF7C5" stop-opacity="0"/>
+    </radialGradient>
     <filter id="softShadow" x="-10" y="-10" width="340" height="240" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000000" flood-opacity=".28"/>
     </filter>
@@ -28,11 +37,13 @@
     <ellipse cx="160" cy="200" rx="116" ry="14" fill="#03070D" fill-opacity=".3"/>
 
     <g stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="76" cy="166" r="38" fill="#07111A" stroke="#EAFBFF" stroke-opacity=".18" stroke-width="10"/>
-      <circle cx="242" cy="166" r="38" fill="#07111A" stroke="#EAFBFF" stroke-opacity=".18" stroke-width="10"/>
+      <circle cx="76" cy="166" r="39" fill="#07111A" stroke="url(#rimGradient)" stroke-opacity=".32" stroke-width="10"/>
+      <circle cx="242" cy="166" r="39" fill="#07111A" stroke="url(#rimGradient)" stroke-opacity=".32" stroke-width="10"/>
       <circle cx="76" cy="166" r="25" stroke="#7CC6FE" stroke-opacity=".42" stroke-width="4"/>
       <circle cx="242" cy="166" r="25" stroke="#7CC6FE" stroke-opacity=".42" stroke-width="4"/>
+      <path d="M46 154C54 134 76 124 99 132M212 154C220 134 242 124 265 132" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="4"/>
       <path d="M76 166H242M76 166L132 112M132 112L168 166M168 166L242 166M132 112H202M202 112L242 166M202 112L220 92M132 112L150 90" stroke="url(#frameGradient)" stroke-width="10"/>
+      <path d="M88 159L133 116H201M171 159L203 117L229 154" stroke="#AEEBFF" stroke-opacity=".38" stroke-width="4"/>
       <path d="M150 90H124M212 92H238" stroke="#FFF5D1" stroke-width="8"/>
       <circle cx="168" cy="166" r="9" fill="#FFD166"/>
 
@@ -40,9 +51,11 @@
       <path d="M156 166L188 144M180 171L146 145" stroke="#FFD166" stroke-width="9"/>
     </g>
 
+    <path d="M132 70C155 56 190 58 216 88C193 100 154 96 132 70Z" fill="url(#warmHighlight)"/>
     <path d="M137 78C148 55 171 49 193 57L211 89C187 93 165 91 145 82L137 78Z" fill="url(#suitGradient)"/>
     <path d="M148 82C164 91 189 94 211 89L198 119C179 126 154 118 135 101L148 82Z" fill="#172D48"/>
     <path d="M151 85C166 92 188 94 204 90" stroke="#FFF0B8" stroke-opacity=".55" stroke-width="6" stroke-linecap="round"/>
+    <path d="M158 94C169 100 185 103 199 101" stroke="#7CC6FE" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/>
 
     <path d="M197 86L224 101M194 92L220 116" stroke="#263E5A" stroke-width="10" stroke-linecap="round"/>
     <path d="M224 101L240 93M220 116L232 96" stroke="#F7FFFF" stroke-width="6" stroke-linecap="round"/>
@@ -51,7 +64,9 @@
 
     <path d="M168 47C170 31 183 20 199 22C214 24 224 36 222 51C220 67 207 78 191 76C176 74 166 62 168 47Z" fill="#A95C3E"/>
     <path d="M163 43C170 23 184 14 202 17C219 20 229 33 229 50C213 42 191 38 163 43Z" fill="url(#helmetGradient)"/>
+    <path d="M177 33C187 24 205 24 218 35" stroke="#FFFFFF" stroke-opacity=".46" stroke-width="5" stroke-linecap="round"/>
     <path d="M198 42C210 41 220 44 227 49C221 58 209 61 195 57L198 42Z" fill="url(#glassGradient)"/>
+    <path d="M204 45C211 45 217 47 222 50" stroke="#FFFFFF" stroke-opacity=".54" stroke-width="3" stroke-linecap="round"/>
     <path d="M183 67C192 72 203 72 212 66" stroke="#713823" stroke-width="4" stroke-linecap="round" opacity=".45"/>
 
     <path d="M42 181C58 191 93 192 112 181M209 181C226 192 261 191 278 181" stroke="#FFFFFF" stroke-opacity=".24" stroke-width="4" stroke-linecap="round"/>

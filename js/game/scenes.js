@@ -37,8 +37,8 @@ const OBSTACLES = {
         action: "duck",
         width: 240,
         height: 104,
-        y: PLAYER.groundY - 166,
-        bounds: { x: -88, y: -48, width: 176, height: 58 },
+        y: PLAYER.groundY - 148,
+        bounds: { x: -82, y: -46, width: 164, height: 54 },
         warning: "Duck branches"
     }
 };
@@ -94,16 +94,16 @@ function paintColorBackdrop(graphics, biome) {
         graphics.fillRect(0, index * bandHeight, WORLD.width, bandHeight + 2);
     }
 
-    graphics.fillStyle(biome.glow, 0.16);
-    graphics.fillEllipse(WORLD.width * 0.76, WORLD.height * 0.23, 520, 240);
-    graphics.fillStyle(0xffffff, 0.08);
-    graphics.fillEllipse(WORLD.width * 0.78, WORLD.height * 0.22, 280, 112);
-    graphics.fillStyle(biome.skyTop, 0.22);
+    graphics.fillStyle(biome.glow, 0.24);
+    graphics.fillEllipse(WORLD.width * 0.76, WORLD.height * 0.23, 620, 282);
+    graphics.fillStyle(0xffffff, 0.13);
+    graphics.fillEllipse(WORLD.width * 0.78, WORLD.height * 0.22, 330, 132);
+    graphics.fillStyle(biome.skyTop, 0.16);
     graphics.fillRect(0, 0, WORLD.width, WORLD.height * 0.18);
 
     for (let index = 0; index < 8; index += 1) {
         const x = index * 280 - 60;
-        graphics.fillStyle(index % 2 === 0 ? 0xffffff : biome.glow, 0.035);
+        graphics.fillStyle(index % 2 === 0 ? 0xffffff : biome.glow, 0.052);
         graphics.fillTriangle(x, 0, x + 180, 0, x + 520, WORLD.height);
     }
 }
@@ -134,6 +134,7 @@ class GameAudio {
     }
 
     resume() {
+        if (window.hillCruzeMuted) return;
         if (!this.enabled) return;
         if (!this.context) {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -146,6 +147,7 @@ class GameAudio {
     }
 
     tone(frequency, duration, options = {}) {
+        if (window.hillCruzeMuted) return;
         this.resume();
         if (!this.context) return;
 
@@ -174,6 +176,7 @@ class GameAudio {
     }
 
     play(name) {
+        if (window.hillCruzeMuted) return;
         const asset = this.assets[name];
         if (asset && this.scene?.cache?.audio?.exists(asset.key)) {
             try {
@@ -238,6 +241,21 @@ function syncResponsiveCamera(scene, options = {}) {
     );
 }
 
+function getResponsiveView(scene) {
+    const camera = scene.cameras.main;
+    const zoom = camera.zoom || 1;
+    const width = (scene.scale.width || WORLD.width) / zoom;
+    const height = (scene.scale.height || WORLD.height) / zoom;
+    return {
+        width,
+        height,
+        left: camera.scrollX,
+        top: camera.scrollY,
+        centerX: camera.scrollX + (width / 2),
+        centerY: camera.scrollY + (height / 2)
+    };
+}
+
 function randomRange(range) {
     return Phaser.Math.Between(range[0], range[1]);
 }
@@ -285,19 +303,21 @@ function createButton(scene, x, y, label, onClick, options = {}) {
     return container;
 }
 
-function createMiniStat(scene, x, y, label, value) {
+function createMiniStat(scene, x, y, label, value, options = {}) {
+    const { width = 214, height = 96, compact = false } = options;
     const container = scene.add.container(x, y);
-    const bg = scene.add.rectangle(0, 0, 214, 96, 0xffffff, 0.08).setStrokeStyle(2, 0xffffff, 0.14);
-    const labelText = scene.add.text(-84, -22, label, {
+    const bg = scene.add.rectangle(0, 0, width, height, 0xffffff, 0.08).setStrokeStyle(2, 0xffffff, 0.14);
+    const labelText = scene.add.text((-width / 2) + 22, compact ? -18 : -22, label, {
         fontFamily: "Sora",
-        fontSize: "14px",
+        fontSize: compact ? "11px" : "14px",
         fontStyle: "700",
         color: "#aebfd6"
     });
-    const valueText = scene.add.text(-84, 8, value, {
+    const valueText = scene.add.text((-width / 2) + 22, compact ? 5 : 8, value, {
         fontFamily: "Teko",
-        fontSize: "42px",
-        color: "#fff5df"
+        fontSize: compact ? "24px" : "42px",
+        color: "#fff5df",
+        wordWrap: { width: width - 34 }
     });
     container.add([bg, labelText, valueText]);
     return container;
@@ -469,7 +489,7 @@ export class MenuScene extends Phaser.Scene {
             powerups: []
         });
 
-        syncResponsiveCamera(this, { focusX: WORLD.width * 0.5, focusY: 430, anchorX: 0.5, anchorY: 0.48 });
+        syncResponsiveCamera(this, { focusX: WORLD.width * 0.5, focusY: 500, anchorX: 0.5, anchorY: 0.5 });
         this.scale.on("resize", this.handleResize, this);
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off("resize", this.handleResize, this));
 
@@ -477,57 +497,36 @@ export class MenuScene extends Phaser.Scene {
         this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x030812, 0.52);
         this.add.tileSprite(WORLD.width / 2, 154, WORLD.width + 260, 140, "cloud-strip").setTint(0xffffff).setAlpha(0.22);
 
+        const view = getResponsiveView(this);
+        const compact = view.width < 760 || view.height < 760;
+        const titleSize = compact ? Math.min(86, Math.max(64, view.width * 0.17)) : 142;
+        const subtitleSize = compact ? 18 : 28;
+        const recordSize = compact ? 14 : 20;
+        const titleY = compact ? view.top + 166 : 138;
+        const buttonWidth = Math.max(250, Math.min(390, view.width - 118));
+
         this.drawMenuGround(biome);
-        const cyclist = this.add.sprite(410, PLAYER.groundY, "cyclist").setOrigin(0.5, 1).setDisplaySize(PLAYER.width, PLAYER.height).setDepth(7);
+        const cyclist = this.add.sprite(view.centerX, PLAYER.groundY, "cyclist").setOrigin(0.5, 1).setDisplaySize(PLAYER.width, PLAYER.height).setDepth(7);
         this.tweens.add({ targets: cyclist, y: PLAYER.groundY - 8, duration: 520, yoyo: true, repeat: -1, ease: "Sine.InOut" });
 
-        this.add.text(118, 130, "Hill Cruze", {
+        this.add.text(view.centerX, titleY, "Hill Cruze", {
             fontFamily: "Teko",
-            fontSize: "142px",
+            fontSize: `${titleSize}px`,
             color: "#fff7df"
-        }).setDepth(8);
-        this.add.text(124, 242, "Endless cyclist arcade.", {
+        }).setOrigin(0.5).setDepth(8);
+        this.add.text(view.centerX, titleY + (compact ? 72 : 106), "Endless cyclist arcade.", {
             fontFamily: "Sora",
-            fontSize: "28px",
+            fontSize: `${subtitleSize}px`,
             color: "#dce7f6"
-        }).setDepth(8);
+        }).setOrigin(0.5).setDepth(8);
 
-        createPanel(this, 1262, 512, 780, 520, {
-            fillColor: 0x07111c,
-            fillAlpha: 0.84,
-            strokeColor: biomeColor(biome),
-            strokeAlpha: 0.3
-        }).setDepth(8);
-        this.add.text(990, 290, "How To Play", {
-            fontFamily: "Teko",
-            fontSize: "78px",
-            color: "#fff2d2"
-        }).setDepth(9);
-
-        const rules = [
-            ["Jump", "Rocks and crates"],
-            ["Duck", "Branches overhead"],
-            ["Boost", "Open track only"]
-        ];
-        rules.forEach(([action, copy], index) => {
-            const y = 404 + (index * 74);
-            this.add.text(1010, y, action, {
-                fontFamily: "Teko",
-                fontSize: "38px",
-                color: "#ffdca0"
-            }).setDepth(9);
-            this.add.text(1210, y + 7, copy, {
-                fontFamily: "Sora",
-                fontSize: "22px",
-                color: "#d6e4f4"
-            }).setDepth(9);
-        });
-
-        this.add.text(1000, 650, `Best: ${formatInteger(profile.bestScore)}   Longest: ${formatInteger(profile.longestDistance)} m   Badge: ${activeBadge.label}`, {
+        this.add.text(view.centerX, titleY + (compact ? 126 : 176), `Best ${formatInteger(profile.bestScore)} / Longest ${formatInteger(profile.longestDistance)} m / ${activeBadge.label}`, {
             fontFamily: "Sora",
-            fontSize: "20px",
+            fontSize: `${recordSize}px`,
             color: "#aebfd6",
-        }).setDepth(9);
+            align: "center",
+            wordWrap: { width: Math.min(540, view.width - 64) }
+        }).setOrigin(0.5).setDepth(9);
 
         let started = false;
         const startRide = () => {
@@ -536,13 +535,20 @@ export class MenuScene extends Phaser.Scene {
             this.scene.start("RunScene", { startBiomeId: biome.id });
         };
 
-        createButton(this, 1262, 750, "Start Ride", startRide, { width: 390 }).setDepth(9);
+        createButton(this, view.centerX, titleY + (compact ? 214 : 278), "Start Ride", startRide, { width: buttonWidth }).setDepth(9);
+        this.add.text(view.centerX, titleY + (compact ? 292 : 364), "Press Space or tap the course to start.", {
+            fontFamily: "Sora",
+            fontSize: compact ? "15px" : "22px",
+            color: "#d6e4f4",
+            align: "center",
+            wordWrap: { width: Math.min(520, view.width - 74) }
+        }).setOrigin(0.5).setDepth(9);
         this.input.keyboard.once("keydown-SPACE", startRide);
         this.input.once("pointerup", startRide);
     }
 
     handleResize() {
-        syncResponsiveCamera(this, { focusX: WORLD.width * 0.5, focusY: 430, anchorX: 0.5, anchorY: 0.48 });
+        syncResponsiveCamera(this, { focusX: WORLD.width * 0.5, focusY: 500, anchorX: 0.5, anchorY: 0.5 });
     }
 
     drawMenuGround(biome) {
@@ -615,7 +621,7 @@ export class RunScene extends Phaser.Scene {
         this.terrainOffset = 0;
         this.cloudOffset = 0;
         this.coinTimer = 420;
-        this.obstacleTimer = 2100;
+        this.obstacleTimer = 2600;
         this.powerupTimer = 5400;
         this.dustTimer = 0;
         this.hudTimer = 0;
@@ -624,6 +630,7 @@ export class RunScene extends Phaser.Scene {
         this.pointerDown = false;
         this.pointerDownAt = 0;
         this.pointerJumpQueued = false;
+        this.jumpBuffer = 0;
         this.lastWarning = "Get ready";
 
         this.createWorld();
@@ -643,10 +650,10 @@ export class RunScene extends Phaser.Scene {
         const biome = BIOMES[this.currentBiomeIndex];
         this.bg = createColorBackdrop(this, biome, 0);
         this.bgNext = createColorBackdrop(this, biome, 0.1, 0);
-        this.tint = this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, biomeColor(biome), 0.06).setDepth(0.2);
-        this.skyShade = this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x020610, 0.18).setDepth(0.25);
-        this.cloudsFar = this.add.tileSprite(WORLD.width / 2, 150, WORLD.width + 360, 142, "cloud-strip").setDepth(1).setAlpha(0.24);
-        this.cloudsNear = this.add.tileSprite(WORLD.width / 2, 250, WORLD.width + 360, 142, "cloud-strip").setDepth(1.1).setAlpha(0.16).setScale(1.28);
+        this.tint = this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, biomeColor(biome), 0.1).setDepth(0.2);
+        this.skyShade = this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x020610, 0.1).setDepth(0.25);
+        this.cloudsFar = this.add.tileSprite(WORLD.width / 2, 150, WORLD.width + 360, 142, "cloud-strip").setDepth(1).setAlpha(0.3);
+        this.cloudsNear = this.add.tileSprite(WORLD.width / 2, 250, WORLD.width + 360, 142, "cloud-strip").setDepth(1.1).setAlpha(0.22).setScale(1.28);
         this.hillBack = this.add.graphics().setDepth(2);
         this.track = this.add.graphics().setDepth(4);
         this.speedLines = this.add.tileSprite(WORLD.width / 2, 360, WORLD.width + 260, 110, "speed-lines").setDepth(5).setAlpha(0);
@@ -674,10 +681,9 @@ export class RunScene extends Phaser.Scene {
             this.audio?.resume();
             this.pointerDown = true;
             this.pointerDownAt = this.time.now;
+            this.pointerJumpQueued = true;
         });
         this.input.on("pointerup", () => {
-            const heldFor = this.time.now - this.pointerDownAt;
-            if (heldFor > 0 && heldFor < 240) this.pointerJumpQueued = true;
             this.pointerDown = false;
             this.pointerDownAt = 0;
         });
@@ -714,9 +720,9 @@ export class RunScene extends Phaser.Scene {
 
         this.updatePhase();
         this.updateMovement(dt, live);
+        this.updateTerrain(dt);
         this.updateSpawning(dt, live);
         this.updateEntities(dt);
-        this.updateTerrain(dt);
         this.updatePlayerVisual(dt);
         this.updateTheme();
         this.updatePowerTimers(dt);
@@ -753,15 +759,17 @@ export class RunScene extends Phaser.Scene {
             this.pointerJumpQueued;
         this.pointerJumpQueued = false;
 
-        const pointerHeldLong = this.pointerDown && (this.time.now - this.pointerDownAt > 260);
         const duckHeld =
             this.keys.down.isDown ||
             this.keys.s.isDown ||
-            this.controls?.isDown("duck") ||
-            pointerHeldLong;
+            this.controls?.isDown("duck");
         const boostHeld = this.keys.shift.isDown || this.controls?.isDown("boost");
 
-        if (live && jumpPressed && this.grounded) {
+        if (jumpPressed) this.jumpBuffer = 0.14;
+        else this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
+
+        if (live && this.jumpBuffer > 0 && this.grounded) {
+            this.jumpBuffer = 0;
             this.audio?.play("jump");
             this.velocityY = -RUN_CONFIG.jumpVelocity;
             this.grounded = false;
@@ -775,7 +783,9 @@ export class RunScene extends Phaser.Scene {
         if (this.boosting && !wasBoosting) this.audio?.play("boost");
 
         const rushBonus = this.powerTimers.rush > 0 ? 1.12 : 1;
-        const baseSpeed = RUN_CONFIG.baseSpeed + Math.min(RUN_CONFIG.maxBonusSpeed, (this.distance * 0.22) + (this.runTime * 10));
+        const rampDistance = Math.max(0, this.distance - 450);
+        const rampTime = Math.max(0, this.runTime - 8);
+        const baseSpeed = RUN_CONFIG.baseSpeed + Math.min(RUN_CONFIG.maxBonusSpeed, (rampDistance * 0.17) + (rampTime * 8.5));
         this.currentSpeed = live ? baseSpeed * rushBonus * (this.boosting ? RUN_CONFIG.boostMultiplier : 1) : 0;
 
         if (this.boosting) {
@@ -815,15 +825,15 @@ export class RunScene extends Phaser.Scene {
         }
 
         if (!this.hazardsLive) {
-            this.obstacleTimer = Math.max(this.obstacleTimer - (dt * 1000), 980);
+            this.obstacleTimer = Math.max(this.obstacleTimer, 1900);
             return;
         }
 
         this.obstacleTimer -= dt * 1000;
         if (this.obstacleTimer <= 0) {
             this.spawnHazardPattern();
-            const squeeze = Math.min(260, this.phaseIndex * 58 + this.runTime * 1.4);
-            this.obstacleTimer = Math.max(820, randomRange(RUN_CONFIG.patternInterval) - squeeze);
+            const squeeze = Math.min(340, this.phaseIndex * 62 + Math.max(0, this.runTime - 12) * 1.45);
+            this.obstacleTimer = Math.max(900, randomRange(RUN_CONFIG.patternInterval) - squeeze);
         }
 
         this.powerupTimer -= dt * 1000;
@@ -857,14 +867,17 @@ export class RunScene extends Phaser.Scene {
 
     spawnObstacle(type, extraX = 0) {
         const spec = OBSTACLES[type];
-        const sprite = this.add.sprite(this.getSpawnX(170 + extraX), spec.y, spec.key)
+        const x = this.getSpawnX(170 + extraX);
+        const groundY = this.getVisualGroundY(x);
+        const y = type === "branch" ? groundY - 148 : groundY + 8;
+        const sprite = this.add.sprite(x, y, spec.key)
             .setDisplaySize(spec.width, spec.height)
             .setDepth(type === "branch" ? 7.4 : 7.2);
         if (type !== "branch") sprite.setOrigin(0.5, 1);
 
-        const glow = this.add.sprite(sprite.x, type === "branch" ? spec.y : PLAYER.groundY + 8, "danger-glow")
+        const glow = this.add.sprite(sprite.x, type === "branch" ? y : groundY + 10, "danger-glow")
             .setDepth(6.4)
-            .setAlpha(0.38)
+            .setAlpha(0.5)
             .setTint(0xff5d68);
 
         this.entities.push({
@@ -879,28 +892,28 @@ export class RunScene extends Phaser.Scene {
 
     spawnCoinPattern() {
         const startX = this.getSpawnX(150);
-        const count = this.phaseIndex < 2 ? 7 : Phaser.Math.Between(6, 10);
+        const count = this.phaseIndex < 2 ? 6 : Phaser.Math.Between(6, 10);
         const arc = this.phaseIndex > 0 && Math.random() > 0.38;
         const duckLine = this.phaseIndex > 2 && Math.random() > 0.74;
 
         for (let index = 0; index < count; index += 1) {
             const x = startX + (index * 82);
             let y = PLAYER.groundY - 150;
-            if (arc) y -= Math.sin(index / Math.max(1, count - 1) * Math.PI) * 96;
+            if (arc) y -= Math.sin(index / Math.max(1, count - 1) * Math.PI) * 86;
             if (duckLine) y = PLAYER.groundY - 94;
             this.spawnCoin(x, y, index);
         }
     }
 
     spawnCoin(x, y, index) {
-        const sprite = this.add.sprite(x, y, "coin").setDepth(7.1).setScale(0.84);
-        const glow = this.add.sprite(x, y, "reward-glow").setDepth(6.5).setTint(0xffd866).setAlpha(0.28).setScale(0.78);
+        const sprite = this.add.sprite(x, y, "coin").setDepth(7.1).setScale(0.94);
+        const glow = this.add.sprite(x, y, "reward-glow").setDepth(6.5).setTint(0xffd866).setAlpha(0.42).setScale(0.9);
         this.entities.push({
             kind: "coin",
             sprite,
             glow,
             x,
-            baseY: y,
+            offsetY: PLAYER.groundY - y,
             phase: index * 0.58
         });
     }
@@ -910,10 +923,10 @@ export class RunScene extends Phaser.Scene {
         const type = Phaser.Utils.Array.GetRandom(types);
         const spec = POWERUPS[type];
         const x = this.getSpawnX(220);
-        const y = PLAYER.groundY - 188;
-        const sprite = this.add.sprite(x, y, spec.key).setDepth(7.3).setScale(0.92);
-        const glow = this.add.sprite(x, y, "reward-glow").setDepth(6.5).setTint(spec.accent).setAlpha(0.36);
-        this.entities.push({ kind: "powerup", type, sprite, glow, x, baseY: y, phase: Math.random() * 6 });
+        const y = this.getVisualGroundY(x) - 152;
+        const sprite = this.add.sprite(x, y, spec.key).setDepth(7.3).setScale(1);
+        const glow = this.add.sprite(x, y, "reward-glow").setDepth(6.5).setTint(spec.accent).setAlpha(0.48).setScale(1.05);
+        this.entities.push({ kind: "powerup", type, sprite, glow, x, offsetY: PLAYER.groundY - y, phase: Math.random() * 6 });
     }
 
     updateEntities(dt) {
@@ -923,14 +936,17 @@ export class RunScene extends Phaser.Scene {
         this.entities = this.entities.filter((entity) => {
             entity.x -= this.currentSpeed * dt;
             if (entity.kind === "coin" || entity.kind === "powerup") {
+                const groundY = this.getVisualGroundY(entity.x);
                 entity.sprite.x = entity.x;
-                entity.sprite.y = entity.baseY + Math.sin((this.time.now * 0.006) + entity.phase) * 10;
+                entity.sprite.y = groundY - entity.offsetY + Math.sin((this.time.now * 0.006) + entity.phase) * 10;
                 entity.sprite.rotation += dt * (entity.kind === "coin" ? 4.4 : 1.1);
-                entity.glow.setPosition(entity.sprite.x, entity.sprite.y).setAlpha(entity.kind === "coin" ? 0.26 : 0.34);
+                entity.glow.setPosition(entity.sprite.x, entity.sprite.y).setAlpha(entity.kind === "coin" ? 0.36 : 0.46);
             } else {
+                const groundY = this.getVisualGroundY(entity.x);
                 entity.sprite.x = entity.x;
-                entity.glow.setPosition(entity.x, entity.type === "branch" ? entity.sprite.y : PLAYER.groundY + 10);
-                entity.glow.setAlpha(0.26 + Math.sin(this.time.now * 0.018) * 0.1);
+                entity.sprite.y = entity.type === "branch" ? groundY - 148 : groundY + 8;
+                entity.glow.setPosition(entity.x, entity.type === "branch" ? entity.sprite.y : groundY + 10);
+                entity.glow.setAlpha(0.34 + Math.sin(this.time.now * 0.018) * 0.12);
             }
 
             if (entity.x < this.getDespawnX()) {
@@ -985,7 +1001,7 @@ export class RunScene extends Phaser.Scene {
     isObstacleCleared(type) {
         const spec = OBSTACLES[type];
         if (spec.action === "duck") return this.ducking;
-        return !this.grounded && this.playerY < PLAYER.groundY - 44;
+        return !this.grounded && this.playerY < PLAYER.groundY - 28;
     }
 
     handleObstacleHit(type) {
@@ -1069,7 +1085,7 @@ export class RunScene extends Phaser.Scene {
         back.clear();
         track.clear();
 
-        back.fillStyle(biome.canopyTint, 0.48);
+        back.fillStyle(biome.canopyTint, 0.58);
         back.beginPath();
         back.moveTo(0, 610);
         for (let x = 0; x <= WORLD.width + 80; x += 80) {
@@ -1081,7 +1097,7 @@ export class RunScene extends Phaser.Scene {
         back.closePath();
         back.fillPath();
 
-        track.fillStyle(biome.ridgeTint, 0.92);
+        track.fillStyle(biome.ridgeTint, 0.96);
         track.beginPath();
         track.moveTo(0, PLAYER.groundY + 28);
         for (let x = 0; x <= WORLD.width + 60; x += 42) {
@@ -1093,7 +1109,7 @@ export class RunScene extends Phaser.Scene {
         track.closePath();
         track.fillPath();
 
-        track.lineStyle(8, biome.laneTint, 0.96);
+        track.lineStyle(9, biome.laneTint, 1);
         track.beginPath();
         for (let x = 0; x <= WORLD.width + 60; x += 42) {
             const y = this.getVisualGroundY(x);
@@ -1102,7 +1118,7 @@ export class RunScene extends Phaser.Scene {
         }
         track.strokePath();
 
-        track.lineStyle(3, 0xffffff, 0.24);
+        track.lineStyle(3, 0xffffff, 0.34);
         for (let x = -180 + (this.terrainOffset % 220); x < WORLD.width + 180; x += 220) {
             const y = this.getVisualGroundY(x);
             track.lineBetween(x, y - 12, x + 92, this.getVisualGroundY(x + 92) - 12);
@@ -1119,8 +1135,8 @@ export class RunScene extends Phaser.Scene {
         const lean = this.boosting ? -7 : this.ducking ? -10 : this.grounded ? Math.sin(this.time.now * 0.012) * 1.8 : -4;
 
         this.playerGroup.setPosition(PLAYER.x, this.playerY + bob);
-        this.playerGroup.setScale(1, Phaser.Math.Linear(this.playerGroup.scaleY, duckScale, 0.22));
-        this.playerGroup.setAngle(Phaser.Math.Linear(this.playerGroup.angle, lean, 0.2));
+        this.playerGroup.setScale(1, Phaser.Math.Linear(this.playerGroup.scaleY, duckScale, 0.38));
+        this.playerGroup.setAngle(Phaser.Math.Linear(this.playerGroup.angle, lean, 0.34));
         this.playerShadow.setPosition(PLAYER.x, PLAYER.groundY + 22);
         this.playerShadow.setScale(this.grounded ? 1 : Phaser.Math.Clamp(1 - ((PLAYER.groundY - this.playerY) / 360), 0.42, 1), this.ducking ? 0.72 : 1);
 
@@ -1217,7 +1233,7 @@ export class RunScene extends Phaser.Scene {
         if (!this.hazardsLive) return "Collect coins";
         if (!nearestObstacle) return "Track clear";
         const spec = OBSTACLES[nearestObstacle.type];
-        if (nearestObstacle.x < PLAYER.x + 560 && nearestObstacle.x > PLAYER.x - 100) {
+        if (nearestObstacle.x < PLAYER.x + 640 && nearestObstacle.x > PLAYER.x - 100) {
             return spec.action === "duck" ? "Duck now" : "Jump now";
         }
         return spec.warning;
@@ -1310,21 +1326,24 @@ export class MilestoneScene extends Phaser.Scene {
 
     create(data) {
         syncResponsiveCamera(this, { focusX: WORLD.width / 2, focusY: 210, anchorX: 0.5, anchorY: 0.24 });
-        const card = createPanel(this, WORLD.width / 2, 150, 710, 136, {
+        const view = getResponsiveView(this);
+        const narrow = view.width < 760;
+        const cardWidth = Math.max(300, Math.min(710, view.width - 34));
+        const card = createPanel(this, view.centerX, 150, cardWidth, narrow ? 124 : 136, {
             fillColor: 0x05101a,
             fillAlpha: 0.86,
             strokeColor: biomeColor(data.biome),
             strokeAlpha: 0.36
         });
 
-        const title = this.add.text(WORLD.width / 2, 124, data.biome.label, {
+        const title = this.add.text(view.centerX, 124, data.biome.label, {
             fontFamily: "Teko",
-            fontSize: "72px",
+            fontSize: narrow ? "52px" : "72px",
             color: "#fff2d2"
         }).setOrigin(0.5);
-        const bonus = this.add.text(WORLD.width / 2, 180, `Momentum +${formatInteger(data.bonus)}`, {
+        const bonus = this.add.text(view.centerX, narrow ? 174 : 180, `Momentum +${formatInteger(data.bonus)}`, {
             fontFamily: "Sora",
-            fontSize: "24px",
+            fontSize: narrow ? "18px" : "24px",
             color: "#dbe8f7"
         }).setOrigin(0.5);
 
@@ -1359,39 +1378,50 @@ export class PauseScene extends Phaser.Scene {
 
         const snapshot = this.scene.get("RunScene").getSnapshot();
         syncResponsiveCamera(this, { focusX: WORLD.width / 2, focusY: WORLD.height / 2, anchorX: 0.5, anchorY: 0.5 });
+        const view = getResponsiveView(this);
+        const compact = view.width < 760 || view.height < 760;
+        const panelWidth = Math.min(860, Math.max(300, view.width - 34));
+        const panelHeight = Math.min(compact ? 610 : 620, Math.max(520, view.height - 34));
+        const panelTop = view.centerY - (panelHeight / 2);
+        const statGap = compact ? 8 : 12;
+        const statWidth = compact ? Math.max(88, (panelWidth - (statGap * 4)) / 3) : 214;
+        const statHeight = compact ? 72 : 96;
+        const buttonWidth = Math.max(250, Math.min(compact ? 340 : 350, panelWidth - 64));
+        const wideButtonWidth = Math.max(250, Math.min(compact ? 340 : 420, panelWidth - 64));
         this.scale.on("resize", this.handleResize, this);
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off("resize", this.handleResize, this));
 
-        this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x04090f, 0.72);
-        createPanel(this, WORLD.width / 2, WORLD.height / 2, 860, 620);
-        this.add.text(WORLD.width / 2, 250, "Paused", {
+        this.add.rectangle(view.centerX, view.centerY, view.width + 80, view.height + 80, 0x04090f, 0.72);
+        createPanel(this, view.centerX, view.centerY, panelWidth, panelHeight);
+        this.add.text(view.centerX, panelTop + (compact ? 64 : 92), "Paused", {
             fontFamily: "Teko",
-            fontSize: "132px",
+            fontSize: compact ? "70px" : "132px",
             color: "#fff2d2"
         }).setOrigin(0.5);
 
-        createMiniStat(this, WORLD.width / 2 - 230, 392, "Score", formatInteger(snapshot.score));
-        createMiniStat(this, WORLD.width / 2, 392, "Distance", `${formatInteger(snapshot.distance)} m`);
-        createMiniStat(this, WORLD.width / 2 + 230, 392, "Coins", formatInteger(snapshot.coins));
+        const statY = panelTop + (compact ? 150 : 202);
+        createMiniStat(this, view.centerX - statWidth - statGap, statY, "Score", formatInteger(snapshot.score), { width: statWidth, height: statHeight, compact });
+        createMiniStat(this, view.centerX, statY, "Distance", `${formatInteger(snapshot.distance)} m`, { width: statWidth, height: statHeight, compact });
+        createMiniStat(this, view.centerX + statWidth + statGap, statY, "Coins", formatInteger(snapshot.coins), { width: statWidth, height: statHeight, compact });
 
-        this.add.text(WORLD.width / 2, 492, `${snapshot.biome} - ${snapshot.phase}`, {
+        this.add.text(view.centerX, panelTop + (compact ? 236 : 312), `${snapshot.biome} - ${snapshot.phase}`, {
             fontFamily: "Sora",
-            fontSize: "22px",
+            fontSize: compact ? "16px" : "22px",
             color: "#d2dfef"
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setWordWrapWidth(panelWidth - 70);
 
-        createButton(this, WORLD.width / 2, 564, "Resume Ride", () => {
+        createButton(this, view.centerX, panelTop + panelHeight - (compact ? 234 : 218), "Resume Ride", () => {
             this.scene.stop();
             this.scene.resume("RunScene");
             emit("mode", { mode: "run" });
             emit("status", { label: "Run Live", message: "Ride resumed.", tone: "info" });
-        });
-        createButton(this, WORLD.width / 2, 656, "Restart Ride", () => {
+        }, { width: buttonWidth });
+        createButton(this, view.centerX, panelTop + panelHeight - (compact ? 150 : 126), "Restart Ride", () => {
             this.scene.stop("RunScene");
             this.scene.stop();
             this.scene.start("RunScene", { startBiomeId: data.startBiomeId });
-        }, { variant: "secondary" });
-        createButton(this, WORLD.width / 2, 748, "Return To Hub", () => window.location.assign("index.html"), { width: 420, variant: "secondary" });
+        }, { width: buttonWidth, variant: "secondary" });
+        createButton(this, view.centerX, panelTop + panelHeight - (compact ? 66 : 50), "Return To Hub", () => window.location.assign("index.html"), { width: wideButtonWidth, variant: "secondary" });
     }
 
     handleResize() {
@@ -1406,26 +1436,37 @@ export class GameOverScene extends Phaser.Scene {
 
     create(data) {
         syncResponsiveCamera(this, { focusX: WORLD.width / 2, focusY: WORLD.height / 2, anchorX: 0.5, anchorY: 0.5 });
+        const view = getResponsiveView(this);
+        const compact = view.width < 760 || view.height < 820;
+        const panelWidth = Math.min(980, Math.max(300, view.width - 34));
+        const panelHeight = Math.min(compact ? 650 : 690, Math.max(560, view.height - 34));
+        const panelTop = view.centerY - (panelHeight / 2);
+        const statGap = compact ? 8 : 12;
+        const statWidth = compact ? Math.max(88, (panelWidth - (statGap * 4)) / 3) : 214;
+        const statHeight = compact ? 72 : 96;
+        const buttonWidth = Math.max(250, Math.min(compact ? 340 : 350, panelWidth - 64));
+        const wideButtonWidth = Math.max(250, Math.min(compact ? 340 : 420, panelWidth - 64));
         this.scale.on("resize", this.handleResize, this);
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off("resize", this.handleResize, this));
 
-        this.add.rectangle(WORLD.width / 2, WORLD.height / 2, WORLD.width, WORLD.height, 0x04090f, 0.78);
-        createPanel(this, WORLD.width / 2, WORLD.height / 2, 980, 690, {
+        this.add.rectangle(view.centerX, view.centerY, view.width + 80, view.height + 80, 0x04090f, 0.78);
+        createPanel(this, view.centerX, view.centerY, panelWidth, panelHeight, {
             fillColor: 0x050f18,
             fillAlpha: 0.9,
             strokeColor: 0xffd166,
             strokeAlpha: 0.28
         });
 
-        this.add.text(WORLD.width / 2, 188, "Run Complete", {
+        this.add.text(view.centerX, panelTop + (compact ? 70 : 94), "Run Complete", {
             fontFamily: "Teko",
-            fontSize: "134px",
+            fontSize: compact ? "70px" : "134px",
             color: "#fff2d2"
         }).setOrigin(0.5);
 
-        createMiniStat(this, WORLD.width / 2 - 250, 332, "Score", formatInteger(data.score));
-        createMiniStat(this, WORLD.width / 2, 332, "Distance", `${formatInteger(data.distance)} m`);
-        createMiniStat(this, WORLD.width / 2 + 250, 332, "Coins", formatInteger(data.coins));
+        const statY = panelTop + (compact ? 158 : 212);
+        createMiniStat(this, view.centerX - statWidth - statGap, statY, "Score", formatInteger(data.score), { width: statWidth, height: statHeight, compact });
+        createMiniStat(this, view.centerX, statY, "Distance", `${formatInteger(data.distance)} m`, { width: statWidth, height: statHeight, compact });
+        createMiniStat(this, view.centerX + statWidth + statGap, statY, "Coins", formatInteger(data.coins), { width: statWidth, height: statHeight, compact });
 
         const unlockText = data.unlockedThisRun.length
             ? `New badge: ${data.unlockedThisRun.map((unlock) => unlock.label).join(", ")}`
@@ -1433,32 +1474,34 @@ export class GameOverScene extends Phaser.Scene {
                 ? `Next badge: ${getCatalogItem(data.nextUnlock.kind, data.nextUnlock.id).label}`
                 : "All badges unlocked";
 
-        this.add.text(WORLD.width / 2, 456, data.reason, {
+        this.add.text(view.centerX, panelTop + (compact ? 258 : 326), data.reason, {
             fontFamily: "Sora",
-            fontSize: "25px",
+            fontSize: compact ? "17px" : "25px",
             color: "#ffe7c2",
-            align: "center"
+            align: "center",
+            wordWrap: { width: panelWidth - 72 }
         }).setOrigin(0.5);
-        this.add.text(WORLD.width / 2, 516, unlockText, {
+        this.add.text(view.centerX, panelTop + (compact ? 318 : 392), unlockText, {
             fontFamily: "Sora",
-            fontSize: "23px",
+            fontSize: compact ? "16px" : "23px",
             color: "#d2dfef",
             align: "center",
-            wordWrap: { width: 760 }
+            wordWrap: { width: panelWidth - 72 }
         }).setOrigin(0.5);
-        this.add.text(WORLD.width / 2, 572, `${data.biome} - ${data.phase}. Ride again for more score and distance.`, {
+        this.add.text(view.centerX, panelTop + (compact ? 382 : 454), `${data.biome} - ${data.phase}`, {
             fontFamily: "Sora",
-            fontSize: "20px",
+            fontSize: compact ? "15px" : "20px",
             color: "#aebfd6",
-            align: "center"
+            align: "center",
+            wordWrap: { width: panelWidth - 74 }
         }).setOrigin(0.5);
 
-        createButton(this, WORLD.width / 2, 642, "Ride Again", () => {
+        createButton(this, view.centerX, panelTop + panelHeight - (compact ? 150 : 142), "Ride Again", () => {
             this.scene.stop("RunScene");
             this.scene.stop();
             this.scene.start("RunScene", { startBiomeId: data.startBiomeId });
-        });
-        createButton(this, WORLD.width / 2, 734, "Return To Hub", () => window.location.assign("index.html"), { width: 420, variant: "secondary" });
+        }, { width: buttonWidth });
+        createButton(this, view.centerX, panelTop + panelHeight - (compact ? 66 : 50), "Return To Hub", () => window.location.assign("index.html"), { width: wideButtonWidth, variant: "secondary" });
     }
 
     handleResize() {
